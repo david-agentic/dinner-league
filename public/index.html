@@ -180,6 +180,7 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
       <div><div class="hlabel" id="youLabel">You</div><div class="hnum" id="youNum">—</div></div>
       <div class="htitle"><div class="em" id="youEm">🍽️</div><div class="tt" id="youTitle">—</div></div>
     </div>
+    <div id="homeList" style="margin-bottom:16px"></div>
     <div class="titles">
       <div class="tcard"><div class="em">🍛</div><div class="tn">Biryani Boss</div><div class="ts" id="biryaniBoss">—</div></div>
       <div class="tcard"><div class="em">🥤</div><div class="tn">Drink Master</div><div class="ts" id="drinkMaster">—</div></div>
@@ -203,7 +204,13 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
   <div class="view" id="v-add">
     <div class="vhead">Add tonight's dinner</div>
     <div class="vsub">Ten seconds. Then watch the table shift.</div>
-    <button class="btn violet" id="sameBtn" style="margin-bottom:20px">⚡ Same as last time</button>
+    <button class="btn violet" id="sameBtn" style="margin-bottom:12px">⚡ Same as last time</button>
+    <button class="btn violet" id="waBtn" style="margin-bottom:20px;opacity:.9">📋 Paste WhatsApp message</button>
+    <div id="waBox" style="display:none;margin-bottom:20px">
+      <textarea id="waText" rows="3" placeholder="e.g. aaj 1450 the biryani, khan ne diye, saad b tha"
+        style="width:100%;background:var(--glass);border:1px solid var(--stroke);border-radius:14px;padding:14px;color:var(--ink);font-family:var(--body);font-size:14px;resize:vertical"></textarea>
+      <button class="btn gold" id="waParse" style="margin-top:10px">🪄 Fill the form from this</button>
+    </div>
     <div class="field"><div class="flabel">Date</div><input type="date" class="dateinp" id="mDate"></div>
     <div class="field"><div class="flabel">What did we eat?</div><div class="chips" id="mTypes"></div></div>
     <div class="field"><div class="flabel">Total bill</div>
@@ -229,6 +236,14 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
     <div id="history"></div>
     <div class="eyebrow" style="margin-top:24px">Settle-ups</div>
     <div id="settleList"></div>
+    <div class="eyebrow" style="margin-top:24px">Members</div>
+    <div id="memberList"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;align-items:center">
+      <input id="mName" placeholder="New member name" maxlength="30"
+        style="flex:1;background:var(--glass);border:1px solid var(--stroke);border-radius:14px;padding:13px 14px;color:var(--ink);font-family:var(--body);font-size:14px;outline:none">
+      <div class="chip" id="mGuest" style="white-space:nowrap">😎 Guest</div>
+      <button class="btn gold" id="mAdd" style="width:auto;padding:13px 18px">Add</button>
+    </div>
     <div class="eyebrow" style="margin-top:24px">Trophy room · past seasons</div>
     <div id="trophies"></div>
     <button class="btn violet" id="roastBtn" style="margin-top:16px">😈 Share this month's roast</button>
@@ -260,6 +275,7 @@ if ((navigator.hardwareConcurrency||4) <= 4 || (navigator.deviceMemory||4) < 4)
 /* ---------- state ---------- */
 let PEOPLE = [], MEALS = [], SETTLES = [], PIN = localStorage.getItem('dl_pin') || '', ME = localStorage.getItem('dl_me') || '';
 const p = id => PEOPLE.find(x => x.id === id);
+const ACTIVE = () => PEOPLE.filter(x => !x.archived);
 const money = n => '₨' + Math.round(Math.abs(n)).toLocaleString();
 const monthKey = d => d.slice(0,7);
 const nowMonth = new Date().toISOString().slice(0,7);
@@ -307,7 +323,7 @@ async function tryPin() {
 }
 function showWho() {
   document.getElementById('whoWrap').style.display = 'block';
-  document.getElementById('whoChips').innerHTML = PEOPLE.map(x =>
+  document.getElementById('whoChips').innerHTML = ACTIVE().map(x =>
     `<div class="chip" data-w="${x.id}">${x.name}</div>`).join('');
   document.querySelectorAll('#whoChips .chip').forEach(c => c.onclick = () => {
     ME = c.dataset.w; localStorage.setItem('dl_me', ME); enter();
@@ -367,7 +383,7 @@ function renderHome() {
   const mn = new Date().toLocaleString('en', {month:'long'});
   document.getElementById('seasonLabel').textContent = mn + ' season';
   const b = balances(nowMonth);
-  const ranked = PEOPLE.filter(x => x.canPay).map(x => ({...x, bal: b[x.id]})).sort((a,z) => z.bal - a.bal);
+  const ranked = ACTIVE().filter(x => x.canPay).map(x => ({...x, bal: b[x.id]})).sort((a,z) => z.bal - a.bal);
   const pod = document.getElementById('podium');
   if (ranked.length < 3) { pod.innerHTML = '<div class="vsub">Add your first dinner to build the podium.</div>'; }
   else {
@@ -404,13 +420,17 @@ function renderHome() {
     document.getElementById('youNum').className='hnum'; document.getElementById('youNum').textContent='Guest — eats free';
     document.getElementById('youEm').textContent='😎'; document.getElementById('youTitle').textContent='VIP Guest';
   }
+  const all = ACTIVE().filter(x=>x.canPay).map(x=>({...x,bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
+  document.getElementById('homeList').innerHTML = all.length > 3 ? all.slice(3).map((x,i) =>
+    `<div class="trorow"><div class="tl" style="color:var(--ink2)">${i+4}. ${x.name}</div>
+     <div class="pamt ${x.bal>=0?'up':'down'}">${x.bal>=0?'+':'−'}${money(x.bal)}</div></div>`).join('') : '';
   const bb = topBy(counts('biryani', nowMonth)), dm = topBy(counts('drinks', nowMonth));
   document.getElementById('biryaniBoss').textContent = bb && bb[1]>0 ? p(bb[0]).name+' · '+bb[1]+' times' : 'No biryani yet 😱';
   document.getElementById('drinkMaster').textContent = dm && dm[1]>0 ? p(dm[0]).name+' · '+dm[1]+' rounds' : 'Dry month so far';
 }
 function renderBoard() {
   const rb = realBalances(), sb = balances(nowMonth);
-  const ranked = PEOPLE.map(x => ({...x, bal: rb[x.id]||0, season: sb[x.id]||0}))
+  const ranked = ACTIVE().map(x => ({...x, bal: rb[x.id]||0, season: sb[x.id]||0}))
     .sort((a,z) => (a.canPay===z.canPay) ? z.bal - a.bal : (a.canPay ? -1 : 1));
   document.getElementById('board').innerHTML = ranked.map((x,i) => {
     const up = x.bal >= 0, sup = x.season >= 0;
@@ -424,7 +444,7 @@ function renderBoard() {
       <div class="hnum ${up?'up':'down'}" style="font-size:19px">${x.canPay?(up?'+':'−')+money(x.bal):'—'}</div>
     </div>`;
   }).join('');
-  renderSettles();
+  renderSettles(); renderMembers();
   const recent = [...MEALS].reverse().slice(0,15);
   const T = {biryani:'🍛',roti:'🥘',fastfood:'🍔',drinks:'🥤'};
   document.getElementById('history').innerHTML = recent.length ? recent.map(m =>
@@ -432,8 +452,9 @@ function renderBoard() {
       <div><div class="l1">${(m.types||[]).map(t=>T[t]||'🍽️').join(' ')||'🍽️'} ${m.date}</div>
       <div class="l2">${m.att.map(id=>p(id)?p(id).name:id).join(', ')} · paid by ${p(m.payer)?p(m.payer).name:m.payer}</div></div>
       <div style="display:flex;align-items:center"><div class="amtline">${money(m.total)}</div>
-      <button class="del" data-del="${m.id}">✕</button></div>
+      <button class="del" data-edit="${m.id}">✎</button><button class="del" data-del="${m.id}">✕</button></div>
     </div>`).join('') : '<div class="vsub">No dinners yet.</div>';
+  document.querySelectorAll('[data-edit]').forEach(btn => btn.onclick = () => startEdit(+btn.dataset.edit));
   document.querySelectorAll('[data-del]').forEach(btn => btn.onclick = async () => {
     if (!confirm('Delete this dinner? Balances will recalculate.')) return;
     try { await api('meals/'+btn.dataset.del, {method:'DELETE'}); await loadState(); renderAll(); toast('Dinner removed'); }
@@ -446,7 +467,7 @@ const WCOLORS = ['#8B5CF6','#2DD4A7','#FF3D8B','#FFB627','#FF5C39','#38BDF8'];
 let rot = 0, spinning = false;
 function buildWheel() {
   const b = realBalances();
-  const players = PEOPLE.filter(x => x.canPay);
+  const players = ACTIVE().filter(x => x.canPay);
   const segs = players.map((x,i) => ({id:x.id, c:WCOLORS[i%WCOLORS.length], w: Math.max(0,-(b[x.id]||0)) + 300}));
   const tot = segs.reduce((a,s) => a+s.w, 0);
   let ang = 0, out = '';
@@ -484,17 +505,32 @@ document.getElementById('spinBtn').addEventListener('click', () => {
 /* ---------- add form ---------- */
 const TYPES = [['biryani','🍛 Biryani'],['roti','🥘 Roti Salan'],['fastfood','🍔 Fast Food'],['drinks','🥤 Drinks']];
 const sel = { types: new Set(), att: new Set(), pay: null };
+let editingId = null;
 function buildForm() {
   document.getElementById('mDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('mTypes').innerHTML = TYPES.map(t=>`<div class="chip" data-t="${t[0]}">${t[1]}</div>`).join('');
-  document.getElementById('mAtt').innerHTML = PEOPLE.map(x=>`<div class="chip" data-a="${x.id}">${x.name}</div>`).join('');
-  document.getElementById('mPay').innerHTML = PEOPLE.map(x=>`<div class="chip pay ${x.canPay?'':'dis'}" data-p="${x.id}">${x.name}</div>`).join('');
+  document.getElementById('mAtt').innerHTML = ACTIVE().map(x=>`<div class="chip" data-a="${x.id}">${x.name}</div>`).join('');
+  document.getElementById('mPay').innerHTML = ACTIVE().map(x=>`<div class="chip pay ${x.canPay?'':'dis'}" data-p="${x.id}">${x.name}</div>`).join('');
   document.querySelectorAll('#mTypes .chip').forEach(c=>c.onclick=()=>{c.classList.toggle('on');tog(sel.types,c.dataset.t);});
   document.querySelectorAll('#mAtt .chip').forEach(c=>c.onclick=()=>{c.classList.toggle('on');tog(sel.att,c.dataset.a);});
   document.querySelectorAll('#mPay .chip').forEach(c=>{ if(!p(c.dataset.p).canPay)return;
     c.onclick=()=>{document.querySelectorAll('#mPay .chip').forEach(o=>o.classList.remove('on'));c.classList.add('on');sel.pay=c.dataset.p;};});
 }
 function tog(set,v){ set.has(v)?set.delete(v):set.add(v); }
+function startEdit(id) {
+  const m = MEALS.find(x => x.id === id);
+  if (!m) return;
+  editingId = id;
+  go('add');
+  document.getElementById('mDate').value = m.date;
+  document.getElementById('mBill').value = m.total;
+  sel.types = new Set(m.types||[]); sel.att = new Set(m.att); sel.pay = m.payer;
+  document.querySelectorAll('#mTypes .chip').forEach(c=>c.classList.toggle('on', sel.types.has(c.dataset.t)));
+  document.querySelectorAll('#mAtt .chip').forEach(c=>c.classList.toggle('on', sel.att.has(c.dataset.a)));
+  document.querySelectorAll('#mPay .chip').forEach(c=>c.classList.toggle('on', c.dataset.p === m.payer));
+  document.getElementById('saveBtn').textContent = '✏️ Update this dinner';
+  toast('Editing — change anything, then update');
+}
 document.getElementById('saveBtn').addEventListener('click', async () => {
   const bill = +document.getElementById('mBill').value;
   if (!bill || bill<=0) return toast('Enter a bill amount 💸');
@@ -505,9 +541,11 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   const btn = document.getElementById('saveBtn'); btn.disabled = true;
   const kingBefore = currentKing();
   try {
-    await api('meals', { method:'POST', body: JSON.stringify({
+    const payload = JSON.stringify({
       date: document.getElementById('mDate').value,
-      types: [...sel.types], total: bill, att: [...sel.att], payer: sel.pay })});
+      types: [...sel.types], total: bill, att: [...sel.att], payer: sel.pay });
+    if (editingId) await api('meals/'+editingId, { method:'PATCH', body: payload });
+    else await api('meals', { method:'POST', body: payload });
     const payer = sel.pay;
     await loadState(); renderAll();
     flyCoins(payer); buzz([20,50,20,50]);
@@ -515,7 +553,8 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     if (kingBefore && kingAfter && kingBefore !== kingAfter)
       setTimeout(() => crownSteal(kingAfter, kingBefore), 1400);
     toast('Logged! '+p(payer).name+' covered '+money(bill)+' 🏆');
-    sel.types.clear(); sel.att.clear(); sel.pay = null;
+    sel.types.clear(); sel.att.clear(); sel.pay = null; editingId = null;
+    document.getElementById('saveBtn').textContent = '💥 Save & celebrate';
     document.getElementById('mBill').value=''; buildForm();
     setTimeout(()=>go('home'), 700);
   } catch(e) { toast('Could not save — check connection'); }
@@ -569,7 +608,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{go(t.dataset.v);buzz
 /* ---------- phase 2: crown steal, smart defaults, trophies, roast ---------- */
 function currentKing() {
   const b = balances(nowMonth);
-  const ranked = PEOPLE.filter(x => x.canPay).map(x => ({id:x.id, bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
+  const ranked = ACTIVE().filter(x => x.canPay).map(x => ({id:x.id, bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
   if (!ranked.length || MEALS.filter(m=>monthKey(m.date)===nowMonth).length === 0) return null;
   return ranked[0].id;
 }
@@ -619,7 +658,7 @@ document.getElementById('roastBtn').addEventListener('click', async () => {
   const paid = {}; PEOPLE.forEach(x=>paid[x.id]=0);
   MEALS.forEach(m => { if (monthKey(m.date)!==nowMonth) return;
     m.att.forEach(id=>{ if(att[id]!==undefined) att[id]++; }); paid[m.payer] = (paid[m.payer]||0)+1; });
-  const players = PEOPLE.filter(x=>x.canPay).map(x=>({...x,bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
+  const players = ACTIVE().filter(x=>x.canPay).map(x=>({...x,bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
   const ghost = players[players.length-1];
   if (!ghost || ghost.bal >= 0) return toast('Nobody to roast — everyone is square 😇');
   const c = document.createElement('canvas'); c.width = 1080; c.height = 1080;
@@ -662,7 +701,7 @@ document.getElementById('settleBtn').addEventListener('click', () => {
 });
 function buildSettleForm() {
   const rb = realBalances();
-  const players = PEOPLE.filter(x => x.canPay);
+  const players = ACTIVE().filter(x => x.canPay);
   const chip = (x, k) => `<div class="chip ${k}" data-s="${x.id}">${x.name}</div>`;
   document.getElementById('sFrom').innerHTML = players.map(x => chip(x, 'from')).join('');
   document.getElementById('sTo').innerHTML = players.map(x => chip(x, 'pay')).join('');
@@ -719,7 +758,7 @@ document.getElementById('wrapBtn').addEventListener('click', () => {
   const monthMeals = MEALS.filter(m => monthKey(m.date) === nowMonth);
   if (!monthMeals.length) return toast('No dinners this month yet 📸');
   const b = balances(nowMonth);
-  const players = PEOPLE.filter(x=>x.canPay).map(x=>({...x,bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
+  const players = ACTIVE().filter(x=>x.canPay).map(x=>({...x,bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
   const total = monthMeals.reduce((a,m)=>a+m.total,0);
   const biggest = monthMeals.reduce((a,m)=>m.total>a.total?m:a,monthMeals[0]);
   const tcount = {}; monthMeals.forEach(m=>(m.types||[]).forEach(t=>tcount[t]=(tcount[t]||0)+1));
@@ -760,6 +799,88 @@ document.getElementById('wrapBtn').addEventListener('click', () => {
     toast('Wrapped downloaded — post it 📸');
   });
 });
+
+document.getElementById('waBtn').addEventListener('click', () => {
+  const b = document.getElementById('waBox');
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('waParse').addEventListener('click', () => {
+  const t = (document.getElementById('waText').value || '').toLowerCase();
+  if (!t.trim()) return toast('Paste the message first');
+  const nums = (t.match(/\d{2,6}/g) || []).map(Number).filter(n => n >= 50 && n <= 200000);
+  if (nums.length) document.getElementById('mBill').value = Math.max(...nums);
+  sel.att = new Set(); sel.pay = null;
+  ACTIVE().forEach(x => { if (t.includes(x.name.toLowerCase())) sel.att.add(x.id); });
+  const payM = t.match(/(\w+)\s*(ne\s+(diye|diya|pay|dia)|paid|pay\s+kiya)/);
+  if (payM) { const cand = ACTIVE().find(x => x.name.toLowerCase() === payM[1]);
+    if (cand && cand.canPay) { sel.pay = cand.id; sel.att.add(cand.id); } }
+  const tmap = {biryani:'biryani', roti:'roti', salan:'roti', 'fast':'fastfood', burger:'fastfood',
+    pizza:'fastfood', drink:'drinks', cold:'drinks', juice:'drinks'};
+  sel.types = new Set();
+  Object.entries(tmap).forEach(([k,v]) => { if (t.includes(k)) sel.types.add(v); });
+  document.querySelectorAll('#mTypes .chip').forEach(c=>c.classList.toggle('on', sel.types.has(c.dataset.t)));
+  document.querySelectorAll('#mAtt .chip').forEach(c=>c.classList.toggle('on', sel.att.has(c.dataset.a)));
+  document.querySelectorAll('#mPay .chip').forEach(c=>c.classList.toggle('on', c.dataset.p === sel.pay));
+  const got = [];
+  if (nums.length) got.push('bill'); if (sel.att.size) got.push(sel.att.size + ' people');
+  if (sel.pay) got.push('payer'); if (sel.types.size) got.push('food');
+  toast(got.length ? 'Filled: ' + got.join(', ') + ' — check & save 🪄' : 'Could not read it — fill manually');
+});
+
+/* ---------- members management ---------- */
+function renderMembers() {
+  const el = document.getElementById('memberList');
+  if (!el) return;
+  el.innerHTML = ACTIVE().map(x => `
+    <div class="mealrow">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="av norm" style="width:36px;height:36px;font-size:14px;margin:0">${x.initial}</div>
+        <div><div class="l1">${x.name}</div>
+        <div class="l2">${x.canPay ? 'Player — pays their share' : 'Guest — eats free 😎'}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <button class="del" data-mtoggle="${x.id}" title="toggle guest">${x.canPay ? '👤' : '😎'}</button>
+        <button class="del" data-mrename="${x.id}">✎</button>
+        <button class="del" data-marchive="${x.id}">✕</button>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('[data-mtoggle]').forEach(b => b.onclick = async () => {
+    const m = p(b.dataset.mtoggle);
+    if (!confirm(m.name + (m.canPay ? ' becomes a GUEST (eats free)?' : ' becomes a PLAYER (pays share)?'))) return;
+    try { await api('people/'+m.id, {method:'PATCH', body: JSON.stringify({can_pay: !m.canPay})});
+      await loadState(); renderAll(); renderMembers(); toast(m.name + ' updated'); }
+    catch(e){ toast('Could not update'); }
+  });
+  document.querySelectorAll('[data-mrename]').forEach(b => b.onclick = async () => {
+    const m = p(b.dataset.mrename);
+    const name = prompt('New name for ' + m.name + ':', m.name);
+    if (!name || !name.trim()) return;
+    try { await api('people/'+m.id, {method:'PATCH', body: JSON.stringify({name: name.trim()})});
+      await loadState(); renderAll(); renderMembers(); toast('Renamed'); }
+    catch(e){ toast('Could not rename'); }
+  });
+  document.querySelectorAll('[data-marchive]').forEach(b => b.onclick = async () => {
+    const m = p(b.dataset.marchive);
+    if (!confirm('Remove ' + m.name + ' from the group? Past dinners stay in history.')) return;
+    try { await api('people/'+m.id, {method:'PATCH', body: JSON.stringify({archived: true})});
+      await loadState(); renderAll(); renderMembers(); toast(m.name + ' removed'); }
+    catch(e){ toast('Could not remove'); }
+  });
+}
+document.getElementById('mAdd').addEventListener('click', async () => {
+  const name = (document.getElementById('mName').value || '').trim();
+  if (!name) return toast('Type a name first');
+  const asGuest = document.getElementById('mGuest').classList.contains('on');
+  try {
+    await api('people', {method:'POST', body: JSON.stringify({name, can_pay: !asGuest})});
+    await loadState(); renderAll(); renderMembers();
+    document.getElementById('mName').value = '';
+    document.getElementById('mGuest').classList.remove('on');
+    toast(name + ' joined the league 🎉');
+  } catch(e){ toast('Could not add member'); }
+});
+document.getElementById('mGuest').addEventListener('click', () =>
+  document.getElementById('mGuest').classList.toggle('on'));
 
 /* ---------- boot ---------- */
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');

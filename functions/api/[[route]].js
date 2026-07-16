@@ -35,6 +35,7 @@ async function ensureSchema(q) {
     id SERIAL PRIMARY KEY, group_id TEXT NOT NULL REFERENCES groups(id),
     settle_date DATE NOT NULL, from_person TEXT NOT NULL, to_person TEXT NOT NULL,
     amount NUMERIC NOT NULL, created_at TIMESTAMPTZ DEFAULT now())`);
+  await q(`ALTER TABLE people ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false`);
   const g = await q(`SELECT id FROM groups WHERE id = 'main'`);
   if (g.length === 0) {
     await q(`INSERT INTO groups (id, name) VALUES ('main', 'Dinner League')`);
@@ -64,7 +65,7 @@ export async function onRequest(context) {
     if (route === 'state' && request.method === 'GET') {
       await ensureSchema(q);
       const people = await q(
-        `SELECT id, name, initial, can_pay FROM people WHERE group_id = 'main' ORDER BY name`);
+        `SELECT id, name, initial, can_pay, archived FROM people WHERE group_id = 'main' ORDER BY name`);
       const meals = await q(
         `SELECT id, meal_date::text AS date, types, total::float AS total,
                 attendees, payer
@@ -80,9 +81,9 @@ export async function onRequest(context) {
       const b = await request.json();
       if (!b.date || !b.total || b.total <= 0) return json({ error: 'invalid_bill' }, 400);
       if (!Array.isArray(b.att) || b.att.length === 0) return json({ error: 'no_attendees' }, 400);
-      const ppl = await q(`SELECT id, can_pay FROM people WHERE group_id = 'main'`);
-      const canPay = new Set(ppl.filter(p => p.can_pay).map(p => p.id));
-      const known = new Set(ppl.map(p => p.id));
+      const ppl = await q(`SELECT id, can_pay, archived FROM people WHERE group_id = 'main'`);
+      const canPay = new Set(ppl.filter(p => p.can_pay && !p.archived).map(p => p.id));
+      const known = new Set(ppl.filter(p => !p.archived).map(p => p.id));
       if (!b.att.every(id => known.has(id))) return json({ error: 'unknown_person' }, 400);
       const payers = b.att.filter(id => canPay.has(id));
       if (payers.length === 0) return json({ error: 'no_payer_attended' }, 400);
@@ -94,6 +95,55 @@ export async function onRequest(context) {
         [b.date, JSON.stringify(Array.isArray(b.types) ? b.types : []),
          b.total, JSON.stringify(b.att), b.payer]);
       return json({ ok: true, id: r[0].id });
+    }
+
+    if (route === 'people' && request.method === 'POST') {
+      const b = await request.json();
+      const name = (b.name || '').trim();
+      if (!name || name.length > 30) return json({ error: 'invalid_name' }, 400);
+      let id = name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'member';
+      const existing = await q(`SELECT id FROM people WHERE group_id = 'main'`);
+      const ids = new Set(existing.map(x => x.id));
+      while (ids.has(id)) id = id + Math.floor(Math.random() * 10);
+      await q(`INSERT INTO people (id, group_id, name, initial, can_pay)
+               VALUES ($1, 'main', $2, $3, $4)`,
+        [id, name, name[0].toUpperCase(), b.can_pay !== false]);
+      return json({ ok: true, id });
+    }
+
+    if (route.startsWith('people/') && request.method === 'PATCH') {
+      const id = route.split('/')[1];
+      const b = await request.json();
+      const cur = await q(`SELECT * FROM people WHERE group_id = 'main' AND id = $1`, [id]);
+      if (!cur.length) return json({ error: 'not_found' }, 404);
+      const name = b.name !== undefined ? String(b.name).trim().slice(0, 30) : cur[0].name;
+      if (!name) return json({ error: 'invalid_name' }, 400);
+      const canPay = b.can_pay !== undefined ? !!b.can_pay : cur[0].can_pay;
+      const archived = b.archived !== undefined ? !!b.archived : cur[0].archived;
+      await q(`UPDATE people SET name = $1, initial = $2, can_pay = $3, archived = $4
+               WHERE group_id = 'main' AND id = $5`,
+        [name, name[0].toUpperCase(), canPay, archived, id]);
+      return json({ ok: true });
+    }
+
+    if (route.startsWith('meals/') && request.method === 'PATCH') {
+      const id = parseInt(route.split('/')[1], 10);
+      if (!id) return json({ error: 'bad_id' }, 400);
+      const b = await request.json();
+      if (!b.date || !b.total || b.total <= 0) return json({ error: 'invalid_bill' }, 400);
+      if (!Array.isArray(b.att) || b.att.length === 0) return json({ error: 'no_attendees' }, 400);
+      const ppl = await q(`SELECT id, can_pay FROM people WHERE group_id = 'main'`);
+      const canPay = new Set(ppl.filter(p => p.can_pay).map(p => p.id));
+      const known = new Set(ppl.map(p => p.id));
+      if (!b.att.every(x => known.has(x))) return json({ error: 'unknown_person' }, 400);
+      const payers = b.att.filter(x => canPay.has(x));
+      if (!payers.length) return json({ error: 'no_payer_attended' }, 400);
+      if (!b.payer || !canPay.has(b.payer) || !b.att.includes(b.payer))
+        return json({ error: 'invalid_payer' }, 400);
+      await q(`UPDATE meals SET meal_date=$1, types=$2::jsonb, total=$3, attendees=$4::jsonb, payer=$5
+               WHERE id=$6 AND group_id='main'`,
+        [b.date, JSON.stringify(b.types||[]), b.total, JSON.stringify(b.att), b.payer, id]);
+      return json({ ok: true });
     }
 
     if (route === 'settlements' && request.method === 'POST') {

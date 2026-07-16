@@ -26,3 +26,10 @@ Then tell Claude "secrets added" — a trigger push deploys everything.
 - Live smoke test: PIN → add real dinner → second phone sees it
 - Rotate the GitHub token (it was pasted in chat)
 - Phase 3b: WhatsApp parser, invites (Wrapped + settle-ups are DONE)
+
+
+## Update (autonomous session 2)
+Built: members management, meal editing, WhatsApp message parser (regex, Urdu/English),
+full standings on home, archived members (history preserved), CI test gate.
+Push notifications NOT built — they need VAPID keys added as Cloudflare env vars
+(only you can add env vars). When wanted: I generate the keypair, you paste two vars, I wire it.

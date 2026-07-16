@@ -29,5 +29,8 @@ Instruction in chat → Claude edits code → push to `main` → Cloudflare Page
 - [x] Phase 1: synced ledger, podium, league, wheel, add-meal, PIN gate, PWA
 - [x] Phase 2: crown-steal moment, trophy room, smart defaults, roast cards
 - [x] Phase 3a: settle-ups (API+UI), dual balance model, Monthly Wrapped, money-math tests
-- [ ] Phase 3b: WhatsApp parser, invites/multi-group
+- [x] Phase 4: members management (add/rename/guest-toggle/archive), meal editing, full home standings, WhatsApp text parser, CI test gate
+- [ ] Push notifications (needs VAPID keys as env vars — see NEXT_STEPS)
+- [ ] Invites/multi-group (commercial tier, parked)
+- [ ] Khata Heist (parked until daily usage proven)
 - [ ] Parked: Khata Heist (until daily usage proven)
