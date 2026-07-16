@@ -28,6 +28,13 @@ A philosophy with no "no" is an accelerator with cut brake lines.
 Any feature that slows logging dinner is wrong by default. The core loop is sacred.
 Everything else orbits it.
 
+## Two rules that prevent hundreds of wasted hours
+- **We refuse to confuse *interesting* with *important*.** Interesting earns a line in the
+  Lab. Important earns a place in the Core. They are not the same, and the gap between them
+  is where founders drown.
+- **A feature is not valuable because it is clever.** It is valuable because users *return*
+  because of it. Cleverness is not a metric. Retention is.
+
 ## KILL LIST (living section — review monthly)
 Great software is built by adding, testing, learning, and *removing*.
 Each month, ask not "what should we improve?" but "what should we DELETE?"

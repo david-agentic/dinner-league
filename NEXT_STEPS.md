@@ -33,3 +33,11 @@ Built: members management, meal editing, WhatsApp message parser (regex, Urdu/En
 full standings on home, archived members (history preserved), CI test gate.
 Push notifications NOT built — they need VAPID keys added as Cloudflare env vars
 (only you can add env vars). When wanted: I generate the keypair, you paste two vars, I wire it.
+
+
+## Update (session: philosophy → dual-track)
+Governance is complete and deliberately small: EXPERIENCE.md, NON_GOALS.md, LAB.md,
+FOUNDER_PLAYBOOK.md. Dual-track adopted: Core ships on evidence, Lab quarantines ideas.
+NO MORE PHILOSOPHY until LAB.md has real observations in it. The app is feature-complete
+for v1. The only remaining pre-launch essential (sub-10s logging, measured on a real thumb)
+needs humans. Next action is not code — it's sending the link + PIN to the group.

@@ -1,5 +1,11 @@
 # Dinner League 🍛👑
 
+> **Protect the Core Loop. Everything else is negotiable.**
+> Core Loop: Open → Know what's happening → Log dinner → Split → Smile → Close.
+>
+> **Dual-track development:** Track A (Core) ships only on evidence. Track B (Lab) captures
+> ideas and quarantines them until evidence promotes them. See LAB.md.
+
 Arcade-style dinner bill tracker for the office crew. PWA + Cloudflare Pages Functions + Neon Postgres.
 
 ## Live pipeline
@@ -21,7 +27,8 @@ Instruction in chat → Claude edits code → push to `main` → Cloudflare Page
 ## Governance (deliberately minimal — 3 files, not nine)
 - `EXPERIENCE.md` — the soul + the Golden Rules + the feature scorecard (the gate)
 - `NON_GOALS.md` — what we refuse to be + the KILL LIST
-- `DISCOVERY.md` — observations/hypotheses/experiments/surprises (fills up post-launch)
+- `LAB.md` — dual-track: Core observations/experiments + quarantined Ideas Lab
+- `FOUNDER_PLAYBOOK.md` — reusable decision principles (not app-specific; for the founder)
 Nine foundation files would be process bloat for a solo/5-user app. These two carry it.
 
 ## Business rules (locked)
