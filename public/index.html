@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120B1E">
+<title>Dinner League</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#120B1E; --bg2:#1B0F2E;
+  --glass:rgba(255,255,255,0.055); --glass2:rgba(255,255,255,0.09);
+  --stroke:rgba(255,255,255,0.10); --stroke2:rgba(255,255,255,0.18);
+  --gold:#FFB627; --chili:#FF5C39; --mint:#2DD4A7; --violet:#8B5CF6; --pink:#FF3D8B;
+  --ink:#F4EEFF; --ink2:#B9AED1; --ink3:#7C7195;
+  --disp:'Space Grotesk',sans-serif; --body:'Inter',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:var(--body);color:var(--ink);background:var(--bg);overflow:hidden;position:relative}
+.aurora{position:fixed;inset:-30%;z-index:0;filter:blur(70px);opacity:.55;pointer-events:none}
+.blob{position:absolute;border-radius:50%}
+.b1{width:55vh;height:55vh;background:var(--violet);top:0;left:-10%;animation:drift1 18s ease-in-out infinite}
+.b2{width:50vh;height:50vh;background:var(--chili);bottom:-10%;right:-5%;animation:drift2 22s ease-in-out infinite}
+.b3{width:40vh;height:40vh;background:var(--pink);top:35%;left:40%;animation:drift3 26s ease-in-out infinite}
+@keyframes drift1{50%{transform:translate(20%,25%) scale(1.15)}}
+@keyframes drift2{50%{transform:translate(-18%,-20%) scale(1.1)}}
+@keyframes drift3{50%{transform:translate(-25%,15%) scale(1.2)}}
+.low .aurora{display:none}
+.low body{background:linear-gradient(160deg,#120B1E,#1B0F2E)}
+
+.app{position:relative;z-index:1;max-width:440px;margin:0 auto;height:100dvh;display:flex;flex-direction:column}
+.scroll{flex:1;overflow-y:auto;padding:20px 18px 96px;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.logo{font-family:var(--disp);font-weight:700;font-size:23px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.logo .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 14px var(--gold)}
+.streak{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(255,92,57,.22),rgba(255,182,39,.22));border:1px solid rgba(255,182,39,.4);color:var(--gold);padding:7px 13px;border-radius:30px;font-weight:600;font-size:14px}
+.flame{animation:flick 1.4s ease-in-out infinite;transform-origin:center bottom}
+@keyframes flick{50%{transform:scale(1.15) rotate(-4deg);filter:drop-shadow(0 0 8px var(--chili))}}
+
+.eyebrow{font-family:var(--disp);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px;font-weight:500}
+
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:26px}
+.ped{flex:1;text-align:center;position:relative}
+.crown{font-size:24px;filter:drop-shadow(0 0 12px var(--gold));animation:float 3s ease-in-out infinite;margin-bottom:2px}
+@keyframes float{50%{transform:translateY(-6px)}}
+.av{width:46px;height:46px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:17px;position:relative}
+.av.king{width:58px;height:58px;font-size:21px;background:linear-gradient(135deg,var(--gold),var(--chili));color:#2A1400;box-shadow:0 0 0 3px rgba(255,182,39,.25),0 0 26px rgba(255,182,39,.5)}
+.av.norm{background:var(--glass2);border:1px solid var(--stroke2);color:var(--ink)}
+.stand{background:var(--glass);border:1px solid var(--stroke);border-bottom:none;border-radius:14px 14px 0 0;padding:12px 6px;backdrop-filter:blur(12px)}
+.low .stand{backdrop-filter:none;background:rgba(255,255,255,.06)}
+.stand.king{border-color:rgba(255,182,39,.4);background:rgba(255,182,39,.08);padding-top:16px;padding-bottom:26px}
+.pname{font-size:12.5px;color:var(--ink2);font-weight:500}
+.pamt{font-family:var(--disp);font-weight:700;font-size:15px;margin-top:3px}
+.pamt.up{color:var(--mint)} .pamt.down{color:var(--chili)}
+.ptitle{font-size:10.5px;margin-top:5px;font-weight:600;letter-spacing:.02em}
+.ptitle.king{color:var(--gold)} .prank{font-size:10.5px;color:var(--ink3);margin-top:5px}
+
+.hero{background:var(--glass);border:1px solid var(--stroke);border-radius:22px;padding:20px;backdrop-filter:blur(16px);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}
+.low .hero{backdrop-filter:none;background:rgba(255,255,255,.06)}
+.hero::before{content:"";position:absolute;top:-40px;right:-30px;width:140px;height:140px;background:radial-gradient(circle,var(--chili),transparent 70%);opacity:.3}
+.hlabel{font-size:13px;color:var(--ink2);position:relative}
+.hnum{font-family:var(--disp);font-weight:700;font-size:30px;letter-spacing:-.02em;margin-top:2px;position:relative;line-height:1.1}
+.hnum.down{color:var(--chili)} .hnum.up{color:var(--mint)}
+.htitle{text-align:right;position:relative}
+.htitle .em{font-size:26px}
+.htitle .tt{font-size:12px;color:var(--ink2);margin-top:2px}
+
+.titles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+.tcard{background:var(--glass);border:1px solid var(--stroke);border-radius:16px;padding:14px;backdrop-filter:blur(12px)}
+.low .tcard{backdrop-filter:none;background:rgba(255,255,255,.06)}
+.tcard .em{font-size:22px}
+.tcard .tn{font-family:var(--disp);font-weight:500;font-size:14px;margin-top:6px}
+.tcard .ts{font-size:12px;color:var(--ink2);margin-top:2px}
+
+.view{display:none;animation:fade .4s ease} .view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}}
+.vhead{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:-.02em;margin-bottom:6px}
+.vsub{font-size:13.5px;color:var(--ink2);margin-bottom:22px}
+
+.wheelwrap{position:relative;width:290px;height:290px;margin:8px auto 20px}
+#wheel{transform-origin:50% 50%;transition:transform 4.4s cubic-bezier(.16,.72,.12,1);filter:drop-shadow(0 0 30px rgba(139,92,246,.35))}
+.pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:3;font-size:30px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))}
+.hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:var(--bg2);border:2px solid var(--stroke2);display:flex;align-items:center;justify-content:center;font-size:22px;z-index:2;box-shadow:0 0 20px rgba(0,0,0,.5)}
+.result{text-align:center;font-family:var(--disp);font-weight:700;font-size:22px;min-height:30px;margin-bottom:6px}
+.rnote{text-align:center;font-size:13px;color:var(--ink2);min-height:18px;margin-bottom:16px}
+
+.field{margin-bottom:20px}
+.flabel{font-family:var(--disp);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{background:var(--glass);border:1px solid var(--stroke);border-radius:30px;padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;transition:.18s;display:flex;align-items:center;gap:7px;user-select:none}
+.chip.on{background:linear-gradient(135deg,rgba(139,92,246,.35),rgba(255,61,139,.3));border-color:var(--violet);box-shadow:0 0 16px rgba(139,92,246,.3)}
+.chip.pay.on{background:linear-gradient(135deg,rgba(255,182,39,.35),rgba(255,92,57,.3));border-color:var(--gold);box-shadow:0 0 16px rgba(255,182,39,.3)}
+.chip.dis{opacity:.35;cursor:not-allowed}
+.amt{display:flex;align-items:center;gap:8px;background:var(--glass);border:1px solid var(--stroke);border-radius:16px;padding:0 18px}
+.amt span{font-family:var(--disp);font-size:22px;color:var(--ink3)}
+.amt input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-family:var(--disp);font-weight:700;font-size:26px;padding:16px 0;width:100%}
+.dateinp{background:var(--glass);border:1px solid var(--stroke);border-radius:14px;padding:14px 16px;color:var(--ink);font-family:var(--body);font-size:15px;width:100%;color-scheme:dark}
+
+.btn{width:100%;border:none;border-radius:16px;padding:17px;font-family:var(--disp);font-weight:700;font-size:16px;cursor:pointer;transition:.16s;display:flex;align-items:center;justify-content:center;gap:9px;letter-spacing:.01em}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:linear-gradient(135deg,var(--gold),var(--chili));color:#2A1400;box-shadow:0 8px 26px rgba(255,92,57,.35)}
+.btn.violet{background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff;box-shadow:0 8px 26px rgba(139,92,246,.4)}
+.btn:disabled{opacity:.5}
+
+.mealrow{background:var(--glass);border:1px solid var(--stroke);border-radius:16px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.mealrow .l1{font-weight:600;font-size:14.5px}
+.mealrow .l2{font-size:12px;color:var(--ink3);margin-top:3px}
+.mealrow .amtline{font-family:var(--disp);font-weight:700;font-size:16px;color:var(--gold)}
+.del{background:none;border:none;color:var(--ink3);font-size:16px;cursor:pointer;padding:6px;margin-left:8px}
+
+nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;display:flex;background:rgba(18,11,30,.82);backdrop-filter:blur(20px);border-top:1px solid var(--stroke);padding:10px 8px calc(10px + env(safe-area-inset-bottom))}
+.low nav{backdrop-filter:none;background:rgba(18,11,30,.97)}
+.tab{flex:1;background:none;border:none;color:var(--ink3);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;cursor:pointer;padding:6px;transition:.16s;font-family:var(--body)}
+.tab .ic{font-size:21px;line-height:1}
+.tab.on{color:var(--gold)}
+.tab.add .ic{background:linear-gradient(135deg,var(--gold),var(--chili));width:46px;height:46px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#2A1400;margin-top:-22px;box-shadow:0 6px 20px rgba(255,92,57,.45)}
+
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--bg2);border:1px solid var(--stroke2);color:var(--ink);padding:13px 20px;border-radius:30px;font-weight:500;font-size:14px;z-index:50;opacity:0;transition:.3s;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:88vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+#fx{position:fixed;inset:0;z-index:40;pointer-events:none}
+.coin{position:fixed;z-index:45;font-size:22px;pointer-events:none;will-change:transform,opacity}
+
+/* PIN gate */
+#gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:30px}
+#gate .glogo{font-family:var(--disp);font-weight:700;font-size:30px;letter-spacing:-.02em}
+#gate .gsub{color:var(--ink2);font-size:14px;text-align:center}
+#gate input{background:var(--glass);border:1px solid var(--stroke2);border-radius:16px;padding:16px;color:var(--ink);font-family:var(--disp);font-weight:700;font-size:26px;text-align:center;letter-spacing:.4em;width:220px;outline:none}
+#gate .gerr{color:var(--chili);font-size:13px;min-height:18px}
+.spin{width:22px;height:22px;border:3px solid var(--stroke2);border-top-color:var(--gold);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.who{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="aurora"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<canvas id="fx"></canvas>
+
+<div id="gate">
+  <div class="glogo">🍛 Dinner League</div>
+  <div class="gsub">Enter the group PIN</div>
+  <input id="pinInp" inputmode="numeric" maxlength="8" autocomplete="off">
+  <div class="gerr" id="pinErr"></div>
+  <div class="gsub" id="whoWrap" style="display:none">Who are you?<div class="who" id="whoChips" style="margin-top:12px"></div></div>
+</div>
+
+<div class="app" style="visibility:hidden" id="appRoot">
+<div class="scroll">
+  <header>
+    <div class="logo"><span class="dot"></span>Dinner League</div>
+    <div class="streak"><span class="flame">🔥</span><span id="streak">0</span></div>
+  </header>
+
+  <div class="view on" id="v-home">
+    <div class="eyebrow" id="seasonLabel">This month's table</div>
+    <div class="podium" id="podium"></div>
+    <div class="hero">
+      <div><div class="hlabel" id="youLabel">You</div><div class="hnum" id="youNum">—</div></div>
+      <div class="htitle"><div class="em" id="youEm">🍽️</div><div class="tt" id="youTitle">—</div></div>
+    </div>
+    <div class="titles">
+      <div class="tcard"><div class="em">🍛</div><div class="tn">Biryani Boss</div><div class="ts" id="biryaniBoss">—</div></div>
+      <div class="tcard"><div class="em">🥤</div><div class="tn">Drink Master</div><div class="ts" id="drinkMaster">—</div></div>
+    </div>
+  </div>
+
+  <div class="view" id="v-spin">
+    <div class="vhead">Who pays tonight?</div>
+    <div class="vsub">Weighted by who owes most this month. Guests are off the wheel.</div>
+    <div class="wheelwrap">
+      <div class="pointer">🔻</div>
+      <svg id="wheel" viewBox="0 0 200 200" width="290" height="290"></svg>
+      <div class="hub">🍽️</div>
+    </div>
+    <div class="result" id="spinResult"></div>
+    <div class="rnote" id="spinNote"></div>
+    <button class="btn violet" id="spinBtn">🎯 Spin the wheel</button>
+  </div>
+
+  <div class="view" id="v-add">
+    <div class="vhead">Add tonight's dinner</div>
+    <div class="vsub">Ten seconds. Then watch the table shift.</div>
+    <div class="field"><div class="flabel">Date</div><input type="date" class="dateinp" id="mDate"></div>
+    <div class="field"><div class="flabel">What did we eat?</div><div class="chips" id="mTypes"></div></div>
+    <div class="field"><div class="flabel">Total bill</div>
+      <div class="amt"><span>₨</span><input type="number" id="mBill" placeholder="0" inputmode="numeric"></div></div>
+    <div class="field"><div class="flabel">Who ate?</div><div class="chips" id="mAtt"></div></div>
+    <div class="field"><div class="flabel">Who paid? <span style="color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">(guests can't)</span></div><div class="chips" id="mPay"></div></div>
+    <button class="btn gold" id="saveBtn">💥 Save &amp; celebrate</button>
+  </div>
+
+  <div class="view" id="v-league">
+    <div class="vhead">The League</div>
+    <div class="vsub" id="leagueSub">This month's standings.</div>
+    <div id="board"></div>
+    <div class="eyebrow" style="margin-top:24px">Recent dinners</div>
+    <div id="history"></div>
+  </div>
+</div>
+
+<nav>
+  <button class="tab on" data-v="home"><span class="ic">👑</span>Table</button>
+  <button class="tab" data-v="spin"><span class="ic">🎯</span>Spin</button>
+  <button class="tab add" data-v="add"><span class="ic">＋</span>Add</button>
+  <button class="tab" data-v="league"><span class="ic">📊</span>League</button>
+</nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- device tier ---------- */
+if ((navigator.hardwareConcurrency||4) <= 4 || (navigator.deviceMemory||4) < 4)
+  document.documentElement.classList.add('low');
+
+/* ---------- state ---------- */
+let PEOPLE = [], MEALS = [], PIN = localStorage.getItem('dl_pin') || '', ME = localStorage.getItem('dl_me') || '';
+const p = id => PEOPLE.find(x => x.id === id);
+const money = n => '₨' + Math.round(Math.abs(n)).toLocaleString();
+const monthKey = d => d.slice(0,7);
+const nowMonth = new Date().toISOString().slice(0,7);
+
+/* ---------- api ---------- */
+async function api(path, opts = {}) {
+  const r = await fetch('/api/' + path, {
+    ...opts,
+    headers: { 'content-type': 'application/json', 'x-pin': PIN, ...(opts.headers||{}) }
+  });
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401) { showGate('Wrong PIN'); throw new Error('bad_pin'); }
+  if (!r.ok) throw new Error(d.error || 'request_failed');
+  return d;
+}
+async function loadState() {
+  const d = await api('state');
+  PEOPLE = d.people.map(x => ({...x, canPay: x.can_pay}));
+  MEALS = d.meals.map(m => ({...m, att: m.attendees}));
+}
+
+/* ---------- gate ---------- */
+const gate = document.getElementById('gate'), pinInp = document.getElementById('pinInp'), pinErr = document.getElementById('pinErr');
+function showGate(err) {
+  gate.style.display = 'flex';
+  document.getElementById('appRoot').style.visibility = 'hidden';
+  pinErr.textContent = err || '';
+}
+pinInp.addEventListener('keyup', async e => { if (e.key === 'Enter') tryPin(); });
+pinInp.addEventListener('change', tryPin);
+async function tryPin() {
+  PIN = pinInp.value.trim();
+  if (!PIN) return;
+  pinErr.textContent = '';
+  pinInp.disabled = true;
+  try {
+    await loadState();
+    localStorage.setItem('dl_pin', PIN);
+    if (!ME) { showWho(); } else { enter(); }
+  } catch (e) {
+    pinErr.textContent = e.message === 'bad_pin' ? 'Wrong PIN — try again' : 'Connection problem — retry';
+  }
+  pinInp.disabled = false;
+}
+function showWho() {
+  document.getElementById('whoWrap').style.display = 'block';
+  document.getElementById('whoChips').innerHTML = PEOPLE.map(x =>
+    `<div class="chip" data-w="${x.id}">${x.name}</div>`).join('');
+  document.querySelectorAll('#whoChips .chip').forEach(c => c.onclick = () => {
+    ME = c.dataset.w; localStorage.setItem('dl_me', ME); enter();
+  });
+}
+function enter() {
+  gate.style.display = 'none';
+  document.getElementById('appRoot').style.visibility = 'visible';
+  renderAll();
+}
+
+/* ---------- logic (guest rule + seasons) ---------- */
+function balances(month) {
+  const b = {}; PEOPLE.forEach(x => b[x.id] = 0);
+  MEALS.forEach(m => {
+    if (month && monthKey(m.date) !== month) return;
+    const payers = m.att.filter(id => p(id) && p(id).canPay);
+    if (!payers.length) return;
+    const share = m.total / payers.length;
+    payers.forEach(id => b[id] -= share);
+    b[m.payer] += m.total;
+  });
+  return b;
+}
+function counts(type, month) {
+  const c = {}; PEOPLE.forEach(x => c[x.id] = 0);
+  MEALS.forEach(m => {
+    if (month && monthKey(m.date) !== month) return;
+    if ((m.types||[]).includes(type)) m.att.forEach(id => { if (c[id] !== undefined) c[id]++; });
+  });
+  return c;
+}
+function groupStreak() {
+  const days = [...new Set(MEALS.map(m => m.date))].sort();
+  if (!days.length) return 0;
+  let s = 1;
+  for (let i = days.length - 1; i > 0; i--) {
+    const diff = (new Date(days[i]) - new Date(days[i-1])) / 86400000;
+    if (diff === 1) s++; else break;
+  }
+  return s;
+}
+const topBy = o => Object.entries(o).sort((a,b) => b[1]-a[1])[0];
+
+/* ---------- render ---------- */
+function renderAll(){ renderHome(); renderBoard(); buildWheel(); buildForm(); }
+function renderHome() {
+  document.getElementById('streak').textContent = groupStreak();
+  const mn = new Date().toLocaleString('en', {month:'long'});
+  document.getElementById('seasonLabel').textContent = mn + ' season';
+  const b = balances(nowMonth);
+  const ranked = PEOPLE.filter(x => x.canPay).map(x => ({...x, bal: b[x.id]})).sort((a,z) => z.bal - a.bal);
+  const pod = document.getElementById('podium');
+  if (ranked.length < 3) { pod.innerHTML = '<div class="vsub">Add your first dinner to build the podium.</div>'; }
+  else {
+    const order = [ranked[1], ranked[0], ranked[2]];
+    pod.innerHTML = order.map((pers,i) => {
+      const rank = i===1?1:(i===0?2:3), king = rank===1, up = pers.bal >= 0;
+      return `<div class="ped">
+        ${king?'<div class="crown">👑</div>':''}
+        <div class="av ${king?'king':'norm'}">${pers.initial}</div>
+        <div class="stand ${king?'king':''}">
+          <div class="pname">${pers.name}</div>
+          <div class="pamt ${up?'up':'down'}">${up?'+':'−'}${money(pers.bal)}</div>
+          ${king?'<div class="ptitle king">Dinner King</div>':`<div class="prank">${rank===2?'2nd':'3rd'}</div>`}
+        </div></div>`;
+    }).join('');
+  }
+  const me = p(ME);
+  document.getElementById('youLabel').textContent = me ? 'You · ' + me.name : 'You';
+  if (me && me.canPay) {
+    const y = b[ME]||0, up = y >= 0;
+    const yn = document.getElementById('youNum');
+    yn.className = 'hnum ' + (up?'up':'down');
+    yn.textContent = (up ? "You're up " : 'You owe ') + money(y);
+    const ghost = ranked[ranked.length-1];
+    if (ghost && ME === ghost.id && ghost.bal < 0) {
+      document.getElementById('youEm').textContent='👻'; document.getElementById('youTitle').textContent='The Ghost';
+    } else if (ranked[0] && ME === ranked[0].id) {
+      document.getElementById('youEm').textContent='👑'; document.getElementById('youTitle').textContent='Dinner King';
+    } else {
+      document.getElementById('youEm').textContent='🍽️'; document.getElementById('youTitle').textContent='In the game';
+    }
+  } else {
+    document.getElementById('youNum').className='hnum'; document.getElementById('youNum').textContent='Guest — eats free';
+    document.getElementById('youEm').textContent='😎'; document.getElementById('youTitle').textContent='VIP Guest';
+  }
+  const bb = topBy(counts('biryani', nowMonth)), dm = topBy(counts('drinks', nowMonth));
+  document.getElementById('biryaniBoss').textContent = bb && bb[1]>0 ? p(bb[0]).name+' · '+bb[1]+' times' : 'No biryani yet 😱';
+  document.getElementById('drinkMaster').textContent = dm && dm[1]>0 ? p(dm[0]).name+' · '+dm[1]+' rounds' : 'Dry month so far';
+}
+function renderBoard() {
+  const b = balances(nowMonth);
+  const ranked = PEOPLE.map(x => ({...x, bal: b[x.id]})).sort((a,z) => z.bal - a.bal);
+  document.getElementById('board').innerHTML = ranked.map((x,i) => {
+    const up = x.bal >= 0;
+    return `<div class="hero" style="margin-bottom:12px;padding:16px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="font-family:var(--disp);font-weight:700;font-size:18px;color:var(--ink3);width:20px">${i+1}</div>
+        <div class="av norm" style="width:40px;height:40px;font-size:15px">${x.initial}</div>
+        <div><div style="font-weight:600">${x.name}</div><div style="font-size:12px;color:var(--ink3)">${x.canPay?'Player':'Guest · never pays'}</div></div>
+      </div>
+      <div class="hnum ${up?'up':'down'}" style="font-size:19px">${x.canPay?(up?'+':'−')+money(x.bal):'—'}</div>
+    </div>`;
+  }).join('');
+  const recent = [...MEALS].reverse().slice(0,15);
+  const T = {biryani:'🍛',roti:'🫓',fastfood:'🍔',drinks:'🥤'};
+  document.getElementById('history').innerHTML = recent.length ? recent.map(m =>
+    `<div class="mealrow">
+      <div><div class="l1">${(m.types||[]).map(t=>T[t]||'🍽️').join(' ')||'🍽️'} ${m.date}</div>
+      <div class="l2">${m.att.map(id=>p(id)?p(id).name:id).join(', ')} · paid by ${p(m.payer)?p(m.payer).name:m.payer}</div></div>
+      <div style="display:flex;align-items:center"><div class="amtline">${money(m.total)}</div>
+      <button class="del" data-del="${m.id}">✕</button></div>
+    </div>`).join('') : '<div class="vsub">No dinners yet.</div>';
+  document.querySelectorAll('[data-del]').forEach(btn => btn.onclick = async () => {
+    if (!confirm('Delete this dinner? Balances will recalculate.')) return;
+    try { await api('meals/'+btn.dataset.del, {method:'DELETE'}); await loadState(); renderAll(); toast('Dinner removed'); }
+    catch(e){ toast('Could not delete — try again'); }
+  });
+}
+
+/* ---------- wheel ---------- */
+const WCOLORS = ['#8B5CF6','#2DD4A7','#FF3D8B','#FFB627','#FF5C39','#38BDF8'];
+let rot = 0, spinning = false;
+function buildWheel() {
+  const b = balances(nowMonth);
+  const players = PEOPLE.filter(x => x.canPay);
+  const segs = players.map((x,i) => ({id:x.id, c:WCOLORS[i%WCOLORS.length], w: Math.max(0,-(b[x.id]||0)) + 300}));
+  const tot = segs.reduce((a,s) => a+s.w, 0);
+  let ang = 0, out = '';
+  segs.forEach(s => {
+    const span = s.w/tot*360, end = ang+span;
+    const x1=100+95*Math.sin(ang*Math.PI/180), y1=100-95*Math.cos(ang*Math.PI/180);
+    const x2=100+95*Math.sin(end*Math.PI/180), y2=100-95*Math.cos(end*Math.PI/180);
+    out += `<path d="M100,100 L${x1.toFixed(2)},${y1.toFixed(2)} A95,95 0 ${span>180?1:0} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${s.c}" opacity="0.92"/>`;
+    const mid=(ang+end)/2, lx=100+62*Math.sin(mid*Math.PI/180), ly=100-62*Math.cos(mid*Math.PI/180);
+    out += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" fill="#1a0d24" font-family="Space Grotesk" font-weight="700" font-size="10.5" text-anchor="middle" dominant-baseline="middle">${p(s.id).name}</text>`;
+    s.mid = mid; s.half = span/2; ang = end;
+  });
+  document.getElementById('wheel').innerHTML = out;
+  return segs;
+}
+document.getElementById('spinBtn').addEventListener('click', () => {
+  if (spinning) return; spinning = true;
+  const btn = document.getElementById('spinBtn'); btn.disabled = true;
+  document.getElementById('spinResult').textContent=''; document.getElementById('spinNote').textContent='';
+  const segs = buildWheel();
+  const tot = segs.reduce((a,s)=>a+s.w,0); let r = Math.random()*tot, acc=0, win = segs[0];
+  for (const s of segs){ acc+=s.w; if (r<=acc){ win=s; break; } }
+  const jitter = (Math.random()*2-1)*(win.half-6);
+  rot += 360*6 + (((360-win.mid+jitter)-(rot%360))+720)%360;
+  document.getElementById('wheel').style.transform = 'rotate('+rot+'deg)';
+  buzz([10,40,10]);
+  setTimeout(() => {
+    document.getElementById('spinResult').textContent = '🎉 '+p(win.id).name+' pays tonight!';
+    document.getElementById('spinNote').textContent = 'The wheel suggests — the meal log decides.';
+    burst(innerWidth/2, innerHeight*0.42); buzz(60);
+    spinning = false; btn.disabled = false;
+  }, 4500);
+});
+
+/* ---------- add form ---------- */
+const TYPES = [['biryani','🍛 Biryani'],['roti','🫓 Roti Salan'],['fastfood','🍔 Fast Food'],['drinks','🥤 Drinks']];
+const sel = { types: new Set(), att: new Set(), pay: null };
+function buildForm() {
+  document.getElementById('mDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('mTypes').innerHTML = TYPES.map(t=>`<div class="chip" data-t="${t[0]}">${t[1]}</div>`).join('');
+  document.getElementById('mAtt').innerHTML = PEOPLE.map(x=>`<div class="chip" data-a="${x.id}">${x.name}</div>`).join('');
+  document.getElementById('mPay').innerHTML = PEOPLE.map(x=>`<div class="chip pay ${x.canPay?'':'dis'}" data-p="${x.id}">${x.name}</div>`).join('');
+  document.querySelectorAll('#mTypes .chip').forEach(c=>c.onclick=()=>{c.classList.toggle('on');tog(sel.types,c.dataset.t);});
+  document.querySelectorAll('#mAtt .chip').forEach(c=>c.onclick=()=>{c.classList.toggle('on');tog(sel.att,c.dataset.a);});
+  document.querySelectorAll('#mPay .chip').forEach(c=>{ if(!p(c.dataset.p).canPay)return;
+    c.onclick=()=>{document.querySelectorAll('#mPay .chip').forEach(o=>o.classList.remove('on'));c.classList.add('on');sel.pay=c.dataset.p;};});
+}
+function tog(set,v){ set.has(v)?set.delete(v):set.add(v); }
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const bill = +document.getElementById('mBill').value;
+  if (!bill || bill<=0) return toast('Enter a bill amount 💸');
+  if (!sel.att.size) return toast('Tap who ate first 🍽️');
+  const payers = [...sel.att].filter(id => p(id).canPay);
+  if (!payers.length) return toast('At least one payer must attend');
+  if (!sel.pay || !sel.att.has(sel.pay)) return toast('Pick who actually paid 👛');
+  const btn = document.getElementById('saveBtn'); btn.disabled = true;
+  try {
+    await api('meals', { method:'POST', body: JSON.stringify({
+      date: document.getElementById('mDate').value,
+      types: [...sel.types], total: bill, att: [...sel.att], payer: sel.pay })});
+    const payer = sel.pay;
+    await loadState(); renderAll();
+    flyCoins(payer); buzz([20,50,20,50]);
+    toast('Logged! '+p(payer).name+' covered '+money(bill)+' 🏆');
+    sel.types.clear(); sel.att.clear(); sel.pay = null;
+    document.getElementById('mBill').value=''; buildForm();
+    setTimeout(()=>go('home'), 700);
+  } catch(e) { toast('Could not save — check connection'); }
+  btn.disabled = false;
+});
+
+/* ---------- fx ---------- */
+const cv = document.getElementById('fx'), cx = cv.getContext('2d');
+function size(){ cv.width=innerWidth; cv.height=innerHeight; } size(); addEventListener('resize', size);
+const LOW = document.documentElement.classList.contains('low');
+function burst(x,y){
+  const N = LOW ? 40 : 90;
+  const cols=['#FFB627','#FF5C39','#2DD4A7','#8B5CF6','#FF3D8B'];
+  const ps=Array.from({length:N},()=>({x,y,vx:(Math.random()-.5)*13,vy:Math.random()*-13-3,g:.4,s:Math.random()*7+4,c:cols[Math.random()*cols.length|0],life:1,rot:Math.random()*6}));
+  let t=0;(function loop(){cx.clearRect(0,0,cv.width,cv.height);let alive=false;
+    ps.forEach(o=>{if(o.life<=0)return;alive=true;o.vy+=o.g;o.x+=o.vx;o.y+=o.vy;o.rot+=.2;o.life-=.012;
+      cx.save();cx.globalAlpha=Math.max(0,o.life);cx.translate(o.x,o.y);cx.rotate(o.rot);cx.fillStyle=o.c;cx.fillRect(-o.s/2,-o.s/2,o.s,o.s*.6);cx.restore();});
+    if(alive&&t++<200)requestAnimationFrame(loop);else cx.clearRect(0,0,cv.width,cv.height);})();
+}
+function flyCoins(payerId){
+  go('home');
+  setTimeout(()=>{
+    const av=[...document.querySelectorAll('#podium .av')].find(a=>a.textContent===(p(payerId)||{}).initial);
+    const r=av?av.getBoundingClientRect():{left:innerWidth/2,top:180,width:40,height:40};
+    const tx=r.left+r.width/2, ty=r.top+r.height/2;
+    const N = LOW ? 7 : 14;
+    for(let i=0;i<N;i++){
+      const el=document.createElement('div');el.className='coin';el.textContent='🪙';
+      const sx=innerWidth/2+(Math.random()-.5)*120, sy=innerHeight*0.55;
+      el.style.left=sx+'px';el.style.top=sy+'px';document.body.appendChild(el);
+      const dur=700+Math.random()*300;
+      el.animate([{transform:'translate(0,0) scale(.6)',opacity:0},{opacity:1,offset:.15},
+        {transform:`translate(${tx-sx}px,${ty-sy}px) scale(1)`,opacity:0}],{duration:dur,easing:'cubic-bezier(.5,0,.3,1)',delay:i*35});
+      setTimeout(()=>el.remove(),dur+i*35+50);
+    }
+    burst(tx,ty);
+  },60);
+}
+function buzz(pat){ if(navigator.vibrate) navigator.vibrate(pat); }
+let tT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),2400); }
+
+/* ---------- nav ---------- */
+function go(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  document.getElementById('v-'+v).classList.add('on');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
+  document.querySelector('.scroll').scrollTop=0;
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{go(t.dataset.v);buzz(8);});
+
+/* ---------- boot ---------- */
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+(async () => {
+  if (PIN) {
+    try { await loadState(); if (!ME) { gate.style.display='flex'; showWho(); } else enter(); return; }
+    catch(e) {}
+  }
+  showGate('');
+})();
+/* refresh when returning to the app */
+document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden && PIN && ME) { try { await loadState(); renderAll(); } catch(e){} }
+});
+</script>
+</body>
+</html>
