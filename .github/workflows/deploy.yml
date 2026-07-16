@@ -13,17 +13,20 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check secrets present
         env:
-          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ST: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SA: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VT: ${{ vars.CLOUDFLARE_API_TOKEN }}
+          VA: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "CLOUDFLARE_API_TOKEN present: $([ -n "$T" ] && echo YES || echo NO)" | tee -a deploy.log
-          echo "CLOUDFLARE_ACCOUNT_ID present: $([ -n "$A" ] && echo YES || echo NO)" | tee -a deploy.log
+          src(){ [ -n "$1" ] && echo "in SECRETS" || { [ -n "$2" ] && echo "in VARIABLES tab" || echo "NOT FOUND anywhere"; }; }
+          echo "CLOUDFLARE_API_TOKEN: $(src "$ST" "$VT")" | tee -a deploy.log
+          echo "CLOUDFLARE_ACCOUNT_ID: $(src "$SA" "$VA")" | tee -a deploy.log
       - name: Deploy
         id: deploy
         continue-on-error: true
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_API_TOKEN || vars.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -o pipefail
           npx wrangler@3 pages deploy public --project-name=dinner-league 2>&1 | tee -a deploy.log
