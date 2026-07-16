@@ -24,6 +24,12 @@ A philosophy with no "no" is an accelerator with cut brake lines.
 - Integrate real payment rails (JazzCash/Easypaisa settle-now) — regulatory + fraud swamp for a solo founder. Manual "mark settled" only.
 - Reset anyone's real money when a season resets. Glory resets; money never does.
 
+## Settlement integrity rule
+You record money YOU paid out (you are the `from`). You may NOT quietly record money you
+RECEIVED — the receiver can't rubber-stamp their own incoming cash. If the receiver must
+log it (someone paid them cash and asked), it's allowed but permanently marked
+"⚠️ recorded by receiver" so the group can see it. Trust through visibility, not blind trust.
+
 ## The 10-Second Rule is non-negotiable
 Any feature that slows logging dinner is wrong by default. The core loop is sacred.
 Everything else orbits it.

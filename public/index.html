@@ -787,6 +787,10 @@ function buildSettleForm() {
   document.getElementById('sFrom').innerHTML = players.map(x => chip(x, 'from')).join('');
   document.getElementById('sTo').innerHTML = players.map(x => chip(x, 'pay')).join('');
   ssel.from = null; ssel.to = null;
+  // pre-select yourself as the payer (the normal case: you record what you paid)
+  setTimeout(()=>{ const meChip=document.querySelector('#sFrom .chip[data-s="'+ME+'"]');
+    if(meChip){ document.querySelectorAll('#sFrom .chip').forEach(o=>o.classList.remove('on'));
+      meChip.classList.add('on'); ssel.from=ME; } },0);
   const suggest = () => {
     if (ssel.from && ssel.to) {
       const owe = Math.max(0, -(rb[ssel.from]||0)), due = Math.max(0, rb[ssel.to]||0);
@@ -808,9 +812,16 @@ document.getElementById('sSave').addEventListener('click', async () => {
   if (!ssel.from || !ssel.to) return toast('Pick both people 🤝');
   if (ssel.from === ssel.to) return toast('Cannot settle with yourself 😅');
   if (!amt || amt <= 0) return toast('Enter the amount paid back');
+  // Rule: you record money YOU paid. You cannot record money you RECEIVED (except with confirm).
+  let override = false;
+  if (ssel.to === ME) {
+    override = confirm('You are the receiver here. Normally the person who PAID records it. Only continue if ' + p(ssel.from).name + ' handed you cash and asked you to log it — it will be marked "recorded by receiver".');
+    if (!override) { toast('Ask ' + p(ssel.from).name + ' to record it, or confirm you received cash'); return; }
+  }
   try {
     await api('settlements', { method:'POST', body: JSON.stringify({
-      date: new Date().toISOString().slice(0,10), from: ssel.from, to: ssel.to, amount: amt })});
+      date: new Date().toISOString().slice(0,10), from: ssel.from, to: ssel.to, amount: amt,
+      recorded_by: ME, receiver_override: override })});
     await loadState(); renderAll();
     document.getElementById('settleForm').style.display = 'none';
     document.getElementById('sAmt').value = '';
@@ -824,7 +835,7 @@ function renderSettles() {
   const recent = [...SETTLES].reverse().slice(0,10);
   el.innerHTML = recent.length ? recent.map(st =>
     `<div class="mealrow">
-      <div><div class="l1">🤝 ${st.date}</div>
+      <div><div class="l1">🤝 ${st.date}${st.by && st.by===st.to ? ' <span style="color:var(--chili);font-size:11px">⚠️ by receiver</span>' : ''}</div>
       <div class="l2">${p(st.from)?p(st.from).name:st.from} paid ${p(st.to)?p(st.to).name:st.to}</div></div>
       <div style="display:flex;align-items:center"><div class="amtline">${money(st.amount)}</div>
       <button class="del" data-sdel="${st.id}">✕</button></div>

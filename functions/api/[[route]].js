@@ -72,7 +72,7 @@ export async function onRequest(context) {
          FROM meals WHERE group_id = 'main' ORDER BY meal_date, id`);
       const settlements = await q(
         `SELECT id, settle_date::text AS date, from_person AS "from", to_person AS "to",
-                amount::float AS amount
+                amount::float AS amount, recorded_by AS "by"
          FROM settlements WHERE group_id = 'main' ORDER BY settle_date, id`);
       return json({ people, meals, settlements });
     }
@@ -153,10 +153,15 @@ export async function onRequest(context) {
       const ppl = await q(`SELECT id, can_pay FROM people WHERE group_id = 'main'`);
       const canPay = new Set(ppl.filter(p => p.can_pay).map(p => p.id));
       if (!canPay.has(b.from) || !canPay.has(b.to)) return json({ error: 'guest_cannot_settle' }, 400);
+      // Rule: the receiver (to) may not be the recorder unless explicitly flagged.
+      // Normal path: recorder pays (from). Receiver-recorded settlements are allowed but marked.
+      const recordedBy = b.recorded_by || null;
+      if (recordedBy && recordedBy === b.to && !b.receiver_override)
+        return json({ error: 'receiver_cannot_record' }, 403);
       const r = await q(
-        `INSERT INTO settlements (group_id, settle_date, from_person, to_person, amount)
-         VALUES ('main', $1, $2, $3, $4) RETURNING id`,
-        [b.date, b.from, b.to, b.amount]);
+        `INSERT INTO settlements (group_id, settle_date, from_person, to_person, amount, recorded_by)
+         VALUES ('main', $1, $2, $3, $4, $5) RETURNING id`,
+        [b.date, b.from, b.to, b.amount, recordedBy]);
       return json({ ok: true, id: r[0].id });
     }
 
