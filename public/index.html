@@ -184,6 +184,7 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
       <div class="tcard"><div class="em">🍛</div><div class="tn">Biryani Boss</div><div class="ts" id="biryaniBoss">—</div></div>
       <div class="tcard"><div class="em">🥤</div><div class="tn">Drink Master</div><div class="ts" id="drinkMaster">—</div></div>
     </div>
+    <button class="btn violet" id="wrapBtn" style="margin-top:14px">📸 Monthly Wrapped</button>
   </div>
 
   <div class="view" id="v-spin">
@@ -214,10 +215,20 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
 
   <div class="view" id="v-league">
     <div class="vhead">The League</div>
-    <div class="vsub" id="leagueSub">This month's standings.</div>
+    <div class="vsub" id="leagueSub">Real balances — lifetime, after settle-ups. Podium glory resets monthly; money never does.</div>
     <div id="board"></div>
+    <button class="btn violet" id="settleBtn" style="margin-top:6px">🤝 Record a settle-up</button>
+    <div id="settleForm" style="display:none;margin-top:16px">
+      <div class="field"><div class="flabel">Who is paying back?</div><div class="chips" id="sFrom"></div></div>
+      <div class="field"><div class="flabel">Who receives?</div><div class="chips" id="sTo"></div></div>
+      <div class="field"><div class="flabel">Amount</div>
+        <div class="amt"><span>₨</span><input type="number" id="sAmt" placeholder="0" inputmode="numeric"></div></div>
+      <button class="btn gold" id="sSave">🤝 Settled — record it</button>
+    </div>
     <div class="eyebrow" style="margin-top:24px">Recent dinners</div>
     <div id="history"></div>
+    <div class="eyebrow" style="margin-top:24px">Settle-ups</div>
+    <div id="settleList"></div>
     <div class="eyebrow" style="margin-top:24px">Trophy room · past seasons</div>
     <div id="trophies"></div>
     <button class="btn violet" id="roastBtn" style="margin-top:16px">😈 Share this month's roast</button>
@@ -247,7 +258,7 @@ if ((navigator.hardwareConcurrency||4) <= 4 || (navigator.deviceMemory||4) < 4)
   document.documentElement.classList.add('low');
 
 /* ---------- state ---------- */
-let PEOPLE = [], MEALS = [], PIN = localStorage.getItem('dl_pin') || '', ME = localStorage.getItem('dl_me') || '';
+let PEOPLE = [], MEALS = [], SETTLES = [], PIN = localStorage.getItem('dl_pin') || '', ME = localStorage.getItem('dl_me') || '';
 const p = id => PEOPLE.find(x => x.id === id);
 const money = n => '₨' + Math.round(Math.abs(n)).toLocaleString();
 const monthKey = d => d.slice(0,7);
@@ -268,6 +279,7 @@ async function loadState() {
   const d = await api('state');
   PEOPLE = d.people.map(x => ({...x, canPay: x.can_pay}));
   MEALS = d.meals.map(m => ({...m, att: m.attendees}));
+  SETTLES = d.settlements || [];
 }
 
 /* ---------- gate ---------- */
@@ -339,6 +351,14 @@ function groupStreak() {
   return s;
 }
 const topBy = o => Object.entries(o).sort((a,b) => b[1]-a[1])[0];
+function realBalances() {
+  const b = balances(null);
+  SETTLES.forEach(st => {
+    if (b[st.from] !== undefined) b[st.from] += st.amount;
+    if (b[st.to]   !== undefined) b[st.to]   -= st.amount;
+  });
+  return b;
+}
 
 /* ---------- render ---------- */
 function renderAll(){ renderHome(); renderBoard(); renderTrophies(); buildWheel(); buildForm(); }
@@ -365,9 +385,10 @@ function renderHome() {
     }).join('');
   }
   const me = p(ME);
-  document.getElementById('youLabel').textContent = me ? 'You · ' + me.name : 'You';
+  document.getElementById('youLabel').textContent = me ? 'You · ' + me.name + ' · overall' : 'You';
   if (me && me.canPay) {
-    const y = b[ME]||0, up = y >= 0;
+    const rb = realBalances();
+    const y = rb[ME]||0, up = y >= 0;
     const yn = document.getElementById('youNum');
     yn.className = 'hnum ' + (up?'up':'down');
     yn.textContent = (up ? "You're up " : 'You owe ') + money(y);
@@ -388,19 +409,21 @@ function renderHome() {
   document.getElementById('drinkMaster').textContent = dm && dm[1]>0 ? p(dm[0]).name+' · '+dm[1]+' rounds' : 'Dry month so far';
 }
 function renderBoard() {
-  const b = balances(nowMonth);
-  const ranked = PEOPLE.map(x => ({...x, bal: b[x.id]})).sort((a,z) => z.bal - a.bal);
+  const rb = realBalances(), sb = balances(nowMonth);
+  const ranked = PEOPLE.map(x => ({...x, bal: rb[x.id]||0, season: sb[x.id]||0})).sort((a,z) => z.bal - a.bal);
   document.getElementById('board').innerHTML = ranked.map((x,i) => {
-    const up = x.bal >= 0;
+    const up = x.bal >= 0, sup = x.season >= 0;
     return `<div class="hero" style="margin-bottom:12px;padding:16px">
       <div style="display:flex;align-items:center;gap:14px">
         <div style="font-family:var(--disp);font-weight:700;font-size:18px;color:var(--ink3);width:20px">${i+1}</div>
         <div class="av norm" style="width:40px;height:40px;font-size:15px">${x.initial}</div>
-        <div><div style="font-weight:600">${x.name}</div><div style="font-size:12px;color:var(--ink3)">${x.canPay?'Player':'Guest · never pays'}</div></div>
+        <div><div style="font-weight:600">${x.name}</div>
+        <div style="font-size:12px;color:var(--ink3)">${x.canPay?('Season '+(sup?'+':'−')+money(x.season)):'Guest · never pays'}</div></div>
       </div>
       <div class="hnum ${up?'up':'down'}" style="font-size:19px">${x.canPay?(up?'+':'−')+money(x.bal):'—'}</div>
     </div>`;
   }).join('');
+  renderSettles();
   const recent = [...MEALS].reverse().slice(0,15);
   const T = {biryani:'🍛',roti:'🫓',fastfood:'🍔',drinks:'🥤'};
   document.getElementById('history').innerHTML = recent.length ? recent.map(m =>
@@ -421,7 +444,7 @@ function renderBoard() {
 const WCOLORS = ['#8B5CF6','#2DD4A7','#FF3D8B','#FFB627','#FF5C39','#38BDF8'];
 let rot = 0, spinning = false;
 function buildWheel() {
-  const b = balances(nowMonth);
+  const b = realBalances();
   const players = PEOPLE.filter(x => x.canPay);
   const segs = players.map((x,i) => ({id:x.id, c:WCOLORS[i%WCOLORS.length], w: Math.max(0,-(b[x.id]||0)) + 300}));
   const tot = segs.reduce((a,s) => a+s.w, 0);
@@ -625,6 +648,115 @@ document.getElementById('roastBtn').addEventListener('click', async () => {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = 'roast.png'; a.click();
     toast('Roast card downloaded — forward it 😈');
+  });
+});
+
+/* ---------- phase 3: settle-up + wrapped ---------- */
+const ssel = { from: null, to: null };
+document.getElementById('settleBtn').addEventListener('click', () => {
+  const f = document.getElementById('settleForm');
+  const show = f.style.display === 'none';
+  f.style.display = show ? 'block' : 'none';
+  if (show) buildSettleForm();
+});
+function buildSettleForm() {
+  const rb = realBalances();
+  const players = PEOPLE.filter(x => x.canPay);
+  const chip = (x, k) => `<div class="chip ${k}" data-s="${x.id}">${x.name}</div>`;
+  document.getElementById('sFrom').innerHTML = players.map(x => chip(x, 'from')).join('');
+  document.getElementById('sTo').innerHTML = players.map(x => chip(x, 'pay')).join('');
+  ssel.from = null; ssel.to = null;
+  const suggest = () => {
+    if (ssel.from && ssel.to) {
+      const owe = Math.max(0, -(rb[ssel.from]||0)), due = Math.max(0, rb[ssel.to]||0);
+      const amt = Math.round(Math.min(owe || due, due || owe));
+      if (amt > 0) document.getElementById('sAmt').value = amt;
+    }
+  };
+  document.querySelectorAll('#sFrom .chip').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#sFrom .chip').forEach(o => o.classList.remove('on'));
+    c.classList.add('on'); ssel.from = c.dataset.s; suggest();
+  });
+  document.querySelectorAll('#sTo .chip').forEach(c => c.onclick = () => {
+    document.querySelectorAll('#sTo .chip').forEach(o => o.classList.remove('on'));
+    c.classList.add('on'); ssel.to = c.dataset.s; suggest();
+  });
+}
+document.getElementById('sSave').addEventListener('click', async () => {
+  const amt = +document.getElementById('sAmt').value;
+  if (!ssel.from || !ssel.to) return toast('Pick both people 🤝');
+  if (ssel.from === ssel.to) return toast('Cannot settle with yourself 😅');
+  if (!amt || amt <= 0) return toast('Enter the amount paid back');
+  try {
+    await api('settlements', { method:'POST', body: JSON.stringify({
+      date: new Date().toISOString().slice(0,10), from: ssel.from, to: ssel.to, amount: amt })});
+    await loadState(); renderAll();
+    document.getElementById('settleForm').style.display = 'none';
+    document.getElementById('sAmt').value = '';
+    burst(innerWidth/2, innerHeight*0.4); buzz([20,40,20]);
+    toast(p(ssel.from).name + ' paid ' + p(ssel.to).name + ' ' + money(amt) + ' 🤝');
+  } catch(e) { toast('Could not save settle-up'); }
+});
+function renderSettles() {
+  const el = document.getElementById('settleList');
+  if (!el) return;
+  const recent = [...SETTLES].reverse().slice(0,10);
+  el.innerHTML = recent.length ? recent.map(st =>
+    `<div class="mealrow">
+      <div><div class="l1">🤝 ${st.date}</div>
+      <div class="l2">${p(st.from)?p(st.from).name:st.from} paid ${p(st.to)?p(st.to).name:st.to}</div></div>
+      <div style="display:flex;align-items:center"><div class="amtline">${money(st.amount)}</div>
+      <button class="del" data-sdel="${st.id}">✕</button></div>
+    </div>`).join('') : '<div class="vsub">No settle-ups yet. Debts are still theoretical 😄</div>';
+  document.querySelectorAll('[data-sdel]').forEach(btn => btn.onclick = async () => {
+    if (!confirm('Remove this settle-up? Balances will recalculate.')) return;
+    try { await api('settlements/'+btn.dataset.sdel, {method:'DELETE'}); await loadState(); renderAll(); toast('Settle-up removed'); }
+    catch(e){ toast('Could not delete'); }
+  });
+}
+document.getElementById('wrapBtn').addEventListener('click', () => {
+  const monthMeals = MEALS.filter(m => monthKey(m.date) === nowMonth);
+  if (!monthMeals.length) return toast('No dinners this month yet 📸');
+  const b = balances(nowMonth);
+  const players = PEOPLE.filter(x=>x.canPay).map(x=>({...x,bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
+  const total = monthMeals.reduce((a,m)=>a+m.total,0);
+  const biggest = monthMeals.reduce((a,m)=>m.total>a.total?m:a,monthMeals[0]);
+  const tcount = {}; monthMeals.forEach(m=>(m.types||[]).forEach(t=>tcount[t]=(tcount[t]||0)+1));
+  const topT = topBy(tcount);
+  const TN = {biryani:'Biryani 🍛',roti:'Roti Salan 🫓',fastfood:'Fast Food 🍔',drinks:'Drinks 🥤'};
+  const c = document.createElement('canvas'); c.width=1080; c.height=1920;
+  const g = c.getContext('2d');
+  g.fillStyle='#120B1E'; g.fillRect(0,0,1080,1920);
+  const gr=g.createLinearGradient(0,0,1080,1920);
+  gr.addColorStop(0,'rgba(139,92,246,.30)'); gr.addColorStop(.5,'rgba(255,61,139,.18)'); gr.addColorStop(1,'rgba(255,182,39,.28)');
+  g.fillStyle=gr; g.fillRect(0,0,1080,1920);
+  g.textAlign='center';
+  const mn = new Date().toLocaleString('en',{month:'long',year:'numeric'});
+  g.fillStyle='#B9AED1'; g.font='44px sans-serif'; g.fillText('DINNER LEAGUE WRAPPED', 540, 160);
+  g.fillStyle='#F4EEFF'; g.font='bold 76px sans-serif'; g.fillText(mn, 540, 260);
+  g.font='150px sans-serif'; g.fillText('👑', 540, 470);
+  g.fillStyle='#FFB627'; g.font='bold 68px sans-serif'; g.fillText(players[0].name + ' ruled the table', 540, 590);
+  const rows = [
+    ['🍽️', monthMeals.length + ' dinners together'],
+    ['💸', money(total) + ' total spent'],
+    ['🔥', 'Biggest bill: ' + money(biggest.total)],
+    topT ? ['⭐', 'Most eaten: ' + (TN[topT[0]]||topT[0])] : null,
+    players[players.length-1].bal < 0 ? ['👻', 'Ghost: ' + players[players.length-1].name] : null
+  ].filter(Boolean);
+  let y = 780;
+  rows.forEach(([em, txt]) => {
+    g.font='64px sans-serif'; g.fillStyle='#F4EEFF'; g.fillText(em, 300, y);
+    g.font='46px sans-serif'; g.fillStyle='#E5DDF5'; g.textAlign='left'; g.fillText(txt, 380, y);
+    g.textAlign='center'; y += 130;
+  });
+  g.fillStyle='#7C7195'; g.font='38px sans-serif'; g.fillText('🍛 Dinner League', 540, 1820);
+  c.toBlob(async blob => {
+    const file = new File([blob], 'wrapped.png', {type:'image/png'});
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      try { await navigator.share({files:[file], title:'Dinner League Wrapped'}); return; } catch(e){}
+    }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='wrapped.png'; a.click();
+    toast('Wrapped downloaded — post it 📸');
   });
 });
 

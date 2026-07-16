@@ -25,4 +25,4 @@ Then tell Claude "secrets added" — a trigger push deploys everything.
 ## Still needed after launch (deliberately not coded yet — untested code shouldn't stack)
 - Live smoke test: PIN → add real dinner → second phone sees it
 - Rotate the GitHub token (it was pasted in chat)
-- Phase 3: Wrapped, WhatsApp parser, invites
+- Phase 3b: WhatsApp parser, invites (Wrapped + settle-ups are DONE)

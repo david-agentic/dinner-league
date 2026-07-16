@@ -31,6 +31,10 @@ async function ensureSchema(q) {
     meal_date DATE NOT NULL, types JSONB NOT NULL DEFAULT '[]',
     total NUMERIC NOT NULL, attendees JSONB NOT NULL, payer TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now())`);
+  await q(`CREATE TABLE IF NOT EXISTS settlements (
+    id SERIAL PRIMARY KEY, group_id TEXT NOT NULL REFERENCES groups(id),
+    settle_date DATE NOT NULL, from_person TEXT NOT NULL, to_person TEXT NOT NULL,
+    amount NUMERIC NOT NULL, created_at TIMESTAMPTZ DEFAULT now())`);
   const g = await q(`SELECT id FROM groups WHERE id = 'main'`);
   if (g.length === 0) {
     await q(`INSERT INTO groups (id, name) VALUES ('main', 'Dinner League')`);
@@ -65,7 +69,11 @@ export async function onRequest(context) {
         `SELECT id, meal_date::text AS date, types, total::float AS total,
                 attendees, payer
          FROM meals WHERE group_id = 'main' ORDER BY meal_date, id`);
-      return json({ people, meals });
+      const settlements = await q(
+        `SELECT id, settle_date::text AS date, from_person AS "from", to_person AS "to",
+                amount::float AS amount
+         FROM settlements WHERE group_id = 'main' ORDER BY settle_date, id`);
+      return json({ people, meals, settlements });
     }
 
     if (route === 'meals' && request.method === 'POST') {
@@ -86,6 +94,27 @@ export async function onRequest(context) {
         [b.date, JSON.stringify(Array.isArray(b.types) ? b.types : []),
          b.total, JSON.stringify(b.att), b.payer]);
       return json({ ok: true, id: r[0].id });
+    }
+
+    if (route === 'settlements' && request.method === 'POST') {
+      const b = await request.json();
+      if (!b.date || !b.amount || b.amount <= 0) return json({ error: 'invalid_amount' }, 400);
+      if (!b.from || !b.to || b.from === b.to) return json({ error: 'invalid_parties' }, 400);
+      const ppl = await q(`SELECT id, can_pay FROM people WHERE group_id = 'main'`);
+      const canPay = new Set(ppl.filter(p => p.can_pay).map(p => p.id));
+      if (!canPay.has(b.from) || !canPay.has(b.to)) return json({ error: 'guest_cannot_settle' }, 400);
+      const r = await q(
+        `INSERT INTO settlements (group_id, settle_date, from_person, to_person, amount)
+         VALUES ('main', $1, $2, $3, $4) RETURNING id`,
+        [b.date, b.from, b.to, b.amount]);
+      return json({ ok: true, id: r[0].id });
+    }
+
+    if (route.startsWith('settlements/') && request.method === 'DELETE') {
+      const id = parseInt(route.split('/')[1], 10);
+      if (!id) return json({ error: 'bad_id' }, 400);
+      await q(`DELETE FROM settlements WHERE id = $1 AND group_id = 'main'`, [id]);
+      return json({ ok: true });
     }
 
     if (route.startsWith('meals/') && request.method === 'DELETE') {
