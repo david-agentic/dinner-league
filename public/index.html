@@ -410,7 +410,8 @@ function renderHome() {
 }
 function renderBoard() {
   const rb = realBalances(), sb = balances(nowMonth);
-  const ranked = PEOPLE.map(x => ({...x, bal: rb[x.id]||0, season: sb[x.id]||0})).sort((a,z) => z.bal - a.bal);
+  const ranked = PEOPLE.map(x => ({...x, bal: rb[x.id]||0, season: sb[x.id]||0}))
+    .sort((a,z) => (a.canPay===z.canPay) ? z.bal - a.bal : (a.canPay ? -1 : 1));
   document.getElementById('board').innerHTML = ranked.map((x,i) => {
     const up = x.bal >= 0, sup = x.season >= 0;
     return `<div class="hero" style="margin-bottom:12px;padding:16px">
@@ -425,7 +426,7 @@ function renderBoard() {
   }).join('');
   renderSettles();
   const recent = [...MEALS].reverse().slice(0,15);
-  const T = {biryani:'🍛',roti:'🫓',fastfood:'🍔',drinks:'🥤'};
+  const T = {biryani:'🍛',roti:'🥘',fastfood:'🍔',drinks:'🥤'};
   document.getElementById('history').innerHTML = recent.length ? recent.map(m =>
     `<div class="mealrow">
       <div><div class="l1">${(m.types||[]).map(t=>T[t]||'🍽️').join(' ')||'🍽️'} ${m.date}</div>
@@ -481,7 +482,7 @@ document.getElementById('spinBtn').addEventListener('click', () => {
 });
 
 /* ---------- add form ---------- */
-const TYPES = [['biryani','🍛 Biryani'],['roti','🫓 Roti Salan'],['fastfood','🍔 Fast Food'],['drinks','🥤 Drinks']];
+const TYPES = [['biryani','🍛 Biryani'],['roti','🥘 Roti Salan'],['fastfood','🍔 Fast Food'],['drinks','🥤 Drinks']];
 const sel = { types: new Set(), att: new Set(), pay: null };
 function buildForm() {
   document.getElementById('mDate').value = new Date().toISOString().slice(0,10);
