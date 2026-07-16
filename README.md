@@ -44,6 +44,7 @@ Nine foundation files would be process bloat for a solo/5-user app. These two ca
 - [x] Phase 3a: settle-ups (API+UI), dual balance model, Monthly Wrapped, money-math tests
 - [x] Phase 4: members management (add/rename/guest-toggle/archive), meal editing, full home standings, WhatsApp text parser, CI test gate
 - [x] First 30 Seconds: 4-card intro ending on Add screen, once per person, success = first meal logged
+- [x] Delight batch: badges/achievements engine (12 badges + unlock animation), prediction mini-game (clout points), WebAudio sound FX, dinner-personality panel, food-rain easter egg (tap logo 5x), random food-fact surprises
 - [ ] Push notifications (needs VAPID keys as env vars — see NEXT_STEPS)
 - [ ] Invites/multi-group (commercial tier, parked)
 - [ ] Khata Heist (parked until daily usage proven)

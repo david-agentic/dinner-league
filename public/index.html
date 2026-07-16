@@ -140,6 +140,32 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
 .who{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 
 
+/* achievement unlock */
+#ach{position:fixed;top:0;left:0;right:0;z-index:95;display:flex;justify-content:center;pointer-events:none;padding-top:14px}
+.achcard{background:linear-gradient(135deg,var(--gold),var(--chili));color:#2A1400;padding:12px 20px;border-radius:16px;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(255,92,57,.5);transform:translateY(-120px);transition:transform .5s cubic-bezier(.2,1.5,.4,1);max-width:90vw}
+.achcard.on{transform:translateY(0)}
+.achcard .ae{font-size:30px}
+.achcard .at{font-family:var(--disp);font-weight:700;font-size:15px}
+.achcard .ad{font-size:12px;opacity:.8}
+/* badges grid */
+.badgegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.badge{background:var(--glass);border:1px solid var(--stroke);border-radius:14px;padding:12px 6px;text-align:center;position:relative}
+.badge.locked{opacity:.4}
+.badge .be{font-size:28px}
+.badge .bn{font-size:10.5px;font-weight:600;margin-top:5px;line-height:1.2}
+.badge.unlocked{border-color:rgba(255,182,39,.5);background:rgba(255,182,39,.08)}
+.badge .bcount{position:absolute;top:5px;right:7px;font-size:10px;color:var(--gold);font-weight:700}
+/* prediction */
+.predchips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:14px}
+.predchip{background:var(--glass);border:1px solid var(--stroke);border-radius:24px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.predchip.on{background:linear-gradient(135deg,var(--violet),var(--pink));border-color:var(--violet)}
+.cloutbar{display:flex;align-items:center;gap:8px;background:var(--glass);border:1px solid var(--stroke);border-radius:12px;padding:8px 12px;font-size:12px;margin-bottom:12px}
+/* stat personality */
+.statcard{background:var(--glass);border:1px solid var(--stroke);border-radius:16px;padding:16px;margin-bottom:10px}
+.statcard .se{font-size:26px}
+.statcard .sh{font-family:var(--disp);font-weight:700;font-size:15px;margin-top:4px}
+.statcard .sd{font-size:12.5px;color:var(--ink2);margin-top:2px}
+.confbtn{position:fixed;bottom:0;opacity:0}
 /* first-30-seconds intro */
 #intro{position:fixed;inset:0;z-index:110;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:34px;text-align:center}
 #intro.on{display:flex;animation:fade .4s ease}
@@ -180,7 +206,7 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
 <div class="scroll">
   <header>
     <div class="logo"><span class="dot"></span>Dinner League</div>
-    <div class="streak"><span class="flame">🔥</span><span id="streak">0</span></div>
+    <div style="display:flex;gap:8px;align-items:center"><button id="soundBtn" style="background:var(--glass);border:1px solid var(--stroke);border-radius:20px;padding:7px 11px;font-size:14px;cursor:pointer;color:var(--ink)">🔊</button><div class="streak"><span class="flame">🔥</span><span id="streak">0</span></div></div>
   </header>
 
   <div class="view on" id="v-home">
@@ -196,6 +222,10 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
       <div class="tcard"><div class="em">🥤</div><div class="tn">Drink Master</div><div class="ts" id="drinkMaster">—</div></div>
     </div>
     <button class="btn violet" id="wrapBtn" style="margin-top:14px">📸 Monthly Wrapped</button>
+    <div class="eyebrow" style="margin-top:26px">🏅 Badges</div>
+    <div class="badgegrid" id="badgeGrid"></div>
+    <div class="eyebrow" style="margin-top:26px">🔮 Your dinner personality</div>
+    <div id="statPersona"></div>
   </div>
 
   <div class="view" id="v-spin">
@@ -206,6 +236,9 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
       <svg id="wheel" viewBox="0 0 200 200" width="290" height="290"></svg>
       <div class="hub">🍽️</div>
     </div>
+    <div class="cloutbar"><span>🪙 Clout points:</span><span id="cloutMe" style="font-weight:700;color:var(--gold)">0</span><span style="color:var(--ink3);margin-left:auto" id="cloutNote">guess right before the spin to earn</span></div>
+    <div style="text-align:center;font-size:13px;color:var(--ink2);margin-bottom:8px" id="predPrompt">Who do you think it'll land on?</div>
+    <div class="predchips" id="predChips"></div>
     <div class="result" id="spinResult"></div>
     <div class="rnote" id="spinNote"></div>
     <button class="btn violet" id="spinBtn">🎯 Spin the wheel</button>
@@ -280,6 +313,7 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
   <div class="sline" id="stealLine"></div>
   <button class="btn gold" style="max-width:240px;margin-top:10px" onclick="document.getElementById('steal').classList.remove('on')">Long live the King</button>
 </div>
+<div id="ach"><div class="achcard" id="achCard"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -423,9 +457,9 @@ function realBalances() {
 }
 
 /* ---------- render ---------- */
-function renderAll(){ renderHome(); renderBoard(); renderTrophies(); buildWheel(); buildForm(); }
+function renderAll(){ renderHome(); renderBoard(); renderTrophies(); buildWheel(); buildForm(); renderBadges(); renderPersona(); renderPredChips(); checkAchievements(); }
 function renderHome() {
-  document.getElementById('streak').textContent = groupStreak();
+  document.getElementById('streak').textContent = groupStreak(); randomSurprise();
   const mn = new Date().toLocaleString('en', {month:'long'});
   document.getElementById('seasonLabel').textContent = mn + ' season';
   const b = balances(nowMonth);
@@ -539,9 +573,10 @@ document.getElementById('spinBtn').addEventListener('click', () => {
   const jitter = (Math.random()*2-1)*(win.half-6);
   rot += 360*6 + (((360-win.mid+jitter)-(rot%360))+720)%360;
   document.getElementById('wheel').style.transform = 'rotate('+rot+'deg)';
-  buzz([10,40,10]);
+  buzz([10,40,10]); SFX.spin(); scorePrediction(win.id);
   setTimeout(() => {
     document.getElementById('spinResult').textContent = '🎉 '+p(win.id).name+' pays tonight!';
+    SFX.win();
     document.getElementById('spinNote').textContent = 'The wheel suggests — the meal log decides.';
     burst(innerWidth/2, innerHeight*0.42); buzz(60);
     spinning = false; btn.disabled = false;
@@ -594,7 +629,7 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     else await api('meals', { method:'POST', body: payload });
     const payer = sel.pay;
     await loadState(); renderAll();
-    flyCoins(payer); buzz([20,50,20,50]);
+    flyCoins(payer); buzz([20,50,20,50]); SFX.coin();
     const kingAfter = currentKing();
     if (kingBefore && kingAfter && kingBefore !== kingAfter)
       setTimeout(() => crownSteal(kingAfter, kingBefore), 1400);
@@ -649,7 +684,7 @@ function go(v){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
   document.querySelector('.scroll').scrollTop=0;
 }
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{go(t.dataset.v);buzz(8);});
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{go(t.dataset.v);buzz(8);SFX.tap();});
 
 /* ---------- phase 2: crown steal, smart defaults, trophies, roast ---------- */
 function currentKing() {
@@ -927,6 +962,173 @@ document.getElementById('mAdd').addEventListener('click', async () => {
 });
 document.getElementById('mGuest').addEventListener('click', () =>
   document.getElementById('mGuest').classList.toggle('on'));
+
+
+/* ---------- SOUND (WebAudio, no files) ---------- */
+let soundOn = localStorage.getItem('dl_sound') !== '0';
+let actx = null;
+function ac(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function beep(freq, dur, type='sine', vol=0.15){
+  if(!soundOn) return;
+  try { const c=ac(), o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(vol, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+dur);
+    o.start(); o.stop(c.currentTime+dur);
+  } catch(e){}
+}
+function chord(freqs, dur=0.4){ freqs.forEach((f,i)=>setTimeout(()=>beep(f,dur,'triangle',0.12), i*70)); }
+const SFX = {
+  tap: ()=>beep(600,0.05,'square',0.06),
+  win: ()=>chord([523,659,784,1047],0.5),
+  coin: ()=>{ [880,1175].forEach((f,i)=>setTimeout(()=>beep(f,0.08,'square',0.1),i*60)); },
+  unlock: ()=>chord([659,880,1319],0.6),
+  spin: ()=>{ let f=200; const iv=setInterval(()=>{ beep(f,0.04,'sawtooth',0.05); f+=15; if(f>600)clearInterval(iv); },40); },
+  fail: ()=>beep(160,0.3,'sawtooth',0.12),
+};
+document.getElementById('soundBtn').addEventListener('click', ()=>{
+  soundOn = !soundOn; localStorage.setItem('dl_sound', soundOn?'1':'0');
+  document.getElementById('soundBtn').textContent = soundOn?'🔊':'🔇';
+  if(soundOn) SFX.tap();
+});
+document.getElementById('soundBtn').textContent = soundOn?'🔊':'🔇';
+
+/* ---------- ACHIEVEMENTS ENGINE ---------- */
+const BADGES = [
+  { id:'first_blood', e:'🎬', n:'First Dinner', test:(x)=>x.totalMeals>=1 },
+  { id:'big_spender', e:'💸', n:'Big Spender', test:(x)=>x.biggestBill>=2000, d:'One bill over ₨2000' },
+  { id:'king3',       e:'👑', n:'Triple Crown', test:(x)=>x.kingMonths>=3, d:'Dinner King 3 seasons' },
+  { id:'ghost',       e:'👻', n:'Certified Ghost', test:(x)=>x.everGhost, d:'Been the Ghost once' },
+  { id:'biryani10',   e:'🍛', n:'Biryani Beast', test:(x)=>x.biryani>=10, d:'10 biryani dinners' },
+  { id:'streak7',     e:'🔥', n:'Week Warrior', test:(x)=>x.streak>=7, d:'7-day group streak' },
+  { id:'generous',    e:'😇', n:'The Generous', test:(x)=>x.timesPaid>=10, d:'Paid 10 times' },
+  { id:'settler',     e:'🤝', n:'Debt Cleaner', test:(x)=>x.settles>=1, d:'Recorded a settle-up' },
+  { id:'oracle',      e:'🔮', n:'The Oracle', test:(x)=>x.correctPreds>=5, d:'5 correct wheel guesses' },
+  { id:'variety',     e:'🌈', n:'Foodie', test:(x)=>x.distinctTypes>=4, d:'Tried all 4 food types' },
+  { id:'century',     e:'💯', n:'Century Club', test:(x)=>x.totalMeals>=100, d:'100 dinners logged' },
+  { id:'crew5',       e:'👥', n:'Full House', test:(x)=>x.maxAttendees>=5, d:'5+ at one dinner' },
+];
+function achStats() {
+  const b = balances(null);
+  const tc = {}; ['biryani','roti','fastfood','drinks'].forEach(t=>tc[t]=0);
+  let biggestBill=0, maxAtt=0, timesPaid={}, distinct=new Set();
+  MEALS.forEach(m=>{ biggestBill=Math.max(biggestBill,m.total); maxAtt=Math.max(maxAtt,m.att.length);
+    timesPaid[m.payer]=(timesPaid[m.payer]||0)+1; (m.types||[]).forEach(t=>{distinct.add(t); if(tc[t]!==undefined)tc[t]++;}); });
+  // king/ghost months
+  let kingMonths={}, everGhost={};
+  monthsList().concat([nowMonth]).forEach(mo=>{
+    monthTitles(mo).forEach(([id,t])=>{ if(t==='👑')kingMonths[id]=(kingMonths[id]||0)+1; if(t==='👻')everGhost[id]=true; });
+  });
+  const preds = JSON.parse(localStorage.getItem('dl_preds')||'{}');
+  return { me:ME,
+    totalMeals: MEALS.length, biggestBill, maxAttendees:maxAtt,
+    biryani: tc.biryani, distinctTypes: distinct.size, streak: groupStreak(),
+    timesPaid: timesPaid[ME]||0, kingMonths: kingMonths[ME]||0, everGhost: !!everGhost[ME],
+    settles: SETTLES.filter(st=>st.from===ME||st.to===ME).length,
+    correctPreds: preds[ME]?.correct||0 };
+}
+function checkAchievements() {
+  const st = achStats();
+  const unlocked = JSON.parse(localStorage.getItem('dl_badges_'+ME)||'[]');
+  const newly = [];
+  BADGES.forEach(bd=>{ if(bd.test(st) && !unlocked.includes(bd.id)){ unlocked.push(bd.id); newly.push(bd); } });
+  localStorage.setItem('dl_badges_'+ME, JSON.stringify(unlocked));
+  newly.forEach((bd,i)=>setTimeout(()=>showAchievement(bd), 600+i*1800));
+  return unlocked;
+}
+function showAchievement(bd) {
+  const card = document.getElementById('achCard');
+  card.innerHTML = `<div class="ae">${bd.e}</div><div><div class="at">Badge unlocked!</div><div class="ad">${bd.n}</div></div>`;
+  card.classList.add('on'); SFX.unlock(); buzz([15,40,15,40,90]);
+  burst(innerWidth/2, 90);
+  setTimeout(()=>card.classList.remove('on'), 3200);
+}
+function renderBadges() {
+  const st = achStats();
+  const unlocked = JSON.parse(localStorage.getItem('dl_badges_'+ME)||'[]');
+  document.getElementById('badgeGrid').innerHTML = BADGES.map(bd=>{
+    const got = unlocked.includes(bd.id) || bd.test(st);
+    return `<div class="badge ${got?'unlocked':'locked'}"><div class="be">${got?bd.e:'🔒'}</div><div class="bn">${bd.n}</div></div>`;
+  }).join('');
+}
+
+/* ---------- STAT PERSONALITY ---------- */
+function renderPersona() {
+  const st = achStats();
+  const rb = realBalances();
+  let persona, emoji, desc;
+  if (!MEALS.length) { persona='The Newcomer'; emoji='🐣'; desc='Log a dinner to reveal your dinner personality.'; }
+  else if (st.everGhost && (rb[ME]||0) < 0) { persona='The Phantom'; emoji='👻'; desc='You appear, you eat, you vanish before the bill. Legendary.'; }
+  else if (st.timesPaid >= st.totalMeals*0.4) { persona='The Sponsor'; emoji='🤑'; desc='Your card has seen things. The group owes you — literally.'; }
+  else if (st.biryani >= 5) { persona='Biryani Loyalist'; emoji='🍛'; desc='Rice runs in your veins. Never once said "let\'s try something else".'; }
+  else if (st.kingMonths >= 1) { persona='The Monarch'; emoji='👑'; desc='You have worn the crown. Power suits you.'; }
+  else { persona='The Regular'; emoji='🍽️'; desc='Steady, reliable, always at the table. The backbone of the League.'; }
+  document.getElementById('statPersona').innerHTML =
+    `<div class="statcard"><div class="se">${emoji}</div><div class="sh">${persona}</div><div class="sd">${desc}</div></div>`;
+}
+
+/* ---------- PREDICTION GAME ---------- */
+let myPrediction = null;
+function renderPredChips() {
+  const players = ACTIVE().filter(x=>x.canPay);
+  document.getElementById('predChips').innerHTML = players.map(x=>
+    `<div class="predchip" data-pred="${x.id}">${x.name}</div>`).join('');
+  document.querySelectorAll('[data-pred]').forEach(c=>c.onclick=()=>{
+    document.querySelectorAll('[data-pred]').forEach(o=>o.classList.remove('on'));
+    c.classList.add('on'); myPrediction=c.dataset.pred; SFX.tap();
+  });
+  const preds = JSON.parse(localStorage.getItem('dl_preds')||'{}');
+  document.getElementById('cloutMe').textContent = preds[ME]?.clout||0;
+}
+function scorePrediction(winnerId) {
+  if (!myPrediction) return;
+  const preds = JSON.parse(localStorage.getItem('dl_preds')||'{}');
+  if (!preds[ME]) preds[ME]={clout:0,correct:0,total:0};
+  preds[ME].total++;
+  if (myPrediction === winnerId) {
+    preds[ME].clout += 10; preds[ME].correct++;
+    setTimeout(()=>{ toast('🔮 Called it! +10 clout points'); SFX.win(); }, 4600);
+  } else {
+    setTimeout(()=>toast('🙈 Wrong guess — no clout this time'), 4600);
+  }
+  localStorage.setItem('dl_preds', JSON.stringify(preds));
+  myPrediction=null;
+  setTimeout(()=>{ renderPredChips(); checkAchievements(); }, 4700);
+}
+
+/* ---------- EASTER EGGS ---------- */
+let logoTaps=0, lastTap=0;
+document.querySelector('.logo').addEventListener('click', ()=>{
+  const now=Date.now(); if(now-lastTap>800)logoTaps=0; lastTap=now; logoTaps++;
+  if(logoTaps>=5){ logoTaps=0; eggRain(); }
+});
+function eggRain() {
+  const foods=['🍛','🍔','🥤','🫓','🍕','🍗','🌮','🍜'];
+  toast('🎉 You found the secret feast!'); SFX.win(); buzz([20,40,20,40,20,90]);
+  for(let i=0;i<40;i++){
+    const el=document.createElement('div'); el.className='coin'; el.textContent=foods[i%foods.length];
+    el.style.left=Math.random()*innerWidth+'px'; el.style.top='-40px'; el.style.fontSize=(20+Math.random()*20)+'px';
+    document.body.appendChild(el);
+    const dur=1800+Math.random()*1500;
+    el.animate([{transform:'translateY(0) rotate(0)',opacity:1},{transform:`translateY(${innerHeight+80}px) rotate(${Math.random()*720}deg)`,opacity:.9}],{duration:dur,easing:'cubic-bezier(.4,0,.7,1)'});
+    setTimeout(()=>el.remove(),dur+50);
+  }
+}
+const FOOD_FACTS = [
+  "Biryani has over 30 regional varieties across South Asia.",
+  "The word 'restaurant' comes from a French word meaning 'to restore'.",
+  "Ketchup was once sold as medicine in the 1830s.",
+  "Naan is over 2,500 years old — one of the oldest breads on record.",
+  "The most expensive pizza ever made cost over $12,000.",
+  "Chili peppers don't actually 'burn' — they trick your nerves.",
+];
+function randomSurprise() {
+  // 15% chance on home load: a friendly surprise
+  if (Math.random() < 0.15 && MEALS.length > 0) {
+    const fact = FOOD_FACTS[Math.floor(Math.random()*FOOD_FACTS.length)];
+    setTimeout(()=>toast('💡 '+fact), 1500);
+  }
+}
 
 /* ---------- boot ---------- */
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
