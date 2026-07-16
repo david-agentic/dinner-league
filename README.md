@@ -18,6 +18,11 @@ Instruction in chat → Claude edits code → push to `main` → Cloudflare Page
 - `functions/api/[[route]].js` — API (Pages Functions), Neon serverless driver
 - Schema auto-creates + seeds on first `/api/state` call. No migrations needed for v1.
 
+## Governance (the discipline, deliberately just 2 files)
+- `EXPERIENCE.md` — the soul + the Golden Rules + the feature scorecard (the gate)
+- `NON_GOALS.md` — what we refuse to be + the KILL LIST
+Nine foundation files would be process bloat for a solo/5-user app. These two carry it.
+
 ## Business rules (locked)
 - Guest rule: `people.can_pay=false` (Saad). Guests attend, never pay; their share splits among attending payers.
 - Split: `total / count(attending payers)`. Payer credited full bill.
