@@ -140,6 +140,16 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
 .who{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 
 
+/* first-30-seconds intro */
+#intro{position:fixed;inset:0;z-index:110;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:34px;text-align:center}
+#intro.on{display:flex;animation:fade .4s ease}
+#intro .icard{max-width:340px}
+#intro .ibig{font-size:64px;margin-bottom:6px;animation:float 3s ease-in-out infinite}
+#intro .ih{font-family:var(--disp);font-weight:700;font-size:27px;letter-spacing:-.02em;margin-bottom:10px}
+#intro .ip{color:var(--ink2);font-size:15px;line-height:1.55}
+#intro .idots{display:flex;gap:8px;margin-top:6px}
+#intro .idot{width:8px;height:8px;border-radius:50%;background:var(--stroke2);transition:.2s}
+#intro .idot.on{background:var(--gold);width:22px;border-radius:4px}
 /* crown steal */
 #steal{position:fixed;inset:0;z-index:90;background:rgba(10,5,20,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px;backdrop-filter:blur(8px)}
 #steal.on{display:flex;animation:fade .5s ease}
@@ -258,6 +268,11 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
 </nav>
 </div>
 
+<div id="intro">
+  <div class="icard" id="introCard"></div>
+  <div class="idots" id="introDots"></div>
+  <button class="btn gold" style="max-width:300px" id="introNext">Next</button>
+</div>
 <div id="steal">
   <div class="bigcrown">👑</div>
   <div class="sline">THE CROWN HAS FALLEN</div>
@@ -333,7 +348,38 @@ function enter() {
   gate.style.display = 'none';
   document.getElementById('appRoot').style.visibility = 'visible';
   renderAll();
+  if (!localStorage.getItem('dl_seen_intro')) runIntro();
 }
+const INTRO = [
+  { big:'🍛', h:'Welcome to Dinner League', p:'The fun way to track who paid for group dinners. No more messy WhatsApp math — just tap, log, and see who\'s the Dinner King 👑' },
+  { big:'😎', h:'The one special rule', p:'Guests (like Saad) eat with the group but never pay — their share is quietly split among everyone who does. You can make anyone a guest anytime.' },
+  { big:'⚡', h:'Logging takes 10 seconds', p:'Tap the ➕ button, pick who ate, type the bill, tap who paid. Done. Balances update on everyone\'s phone instantly.' },
+  { big:'🎯', h:'Let\'s log your first dinner', p:'That\'s the whole app. Ready? We\'ll drop you right on the Add screen.' }
+];
+let introI = 0;
+function runIntro() {
+  introI = 0;
+  document.getElementById('intro').classList.add('on');
+  paintIntro();
+}
+function paintIntro() {
+  const c = INTRO[introI];
+  document.getElementById('introCard').innerHTML =
+    `<div class="ibig">${c.big}</div><div class="ih">${c.h}</div><div class="ip">${c.p}</div>`;
+  document.getElementById('introDots').innerHTML =
+    INTRO.map((_,i)=>`<div class="idot ${i===introI?'on':''}"></div>`).join('');
+  document.getElementById('introNext').textContent = introI === INTRO.length-1 ? "Log first dinner →" : 'Next';
+}
+document.getElementById('introNext').addEventListener('click', () => {
+  buzz(8);
+  if (introI < INTRO.length-1) { introI++; paintIntro(); }
+  else {
+    localStorage.setItem('dl_seen_intro','1');
+    document.getElementById('intro').classList.remove('on');
+    go('add');
+    toast('This is where the magic happens — log tonight\'s dinner 🍛');
+  }
+});
 
 /* ---------- logic (guest rule + seasons) ---------- */
 function balances(month) {

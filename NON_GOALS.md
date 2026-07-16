@@ -3,6 +3,11 @@
 The most important document, because almost nobody writes it.
 A philosophy with no "no" is an accelerator with cut brake lines.
 
+## The build-phase switch
+- **Pre-launch (now):** ship core-loop essentials on reasoning. Evidence Gate is OFF.
+- **Post-launch (after 1 week of real group use):** Evidence Gate is ON. No new feature
+  without answering its six questions. This is when we start *removing*, too.
+
 ## We refuse to become
 - Accounting software / ERP / corporate dashboard
 - An expense tracker (Splitwise, Excel, QuickBooks)
