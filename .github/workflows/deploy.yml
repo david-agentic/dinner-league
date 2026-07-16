@@ -11,6 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check secrets present
+        env:
+          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "CLOUDFLARE_API_TOKEN present: $([ -n "$T" ] && echo YES || echo NO)" | tee -a deploy.log
+          echo "CLOUDFLARE_ACCOUNT_ID present: $([ -n "$A" ] && echo YES || echo NO)" | tee -a deploy.log
       - name: Deploy
         id: deploy
         continue-on-error: true
@@ -19,7 +26,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -o pipefail
-          npx wrangler@3 pages deploy public --project-name=dinner-league 2>&1 | tee deploy.log
+          npx wrangler@3 pages deploy public --project-name=dinner-league 2>&1 | tee -a deploy.log
       - name: Report result to issue
         if: always()
         env:
