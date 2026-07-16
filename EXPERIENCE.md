@@ -1,5 +1,11 @@
 # EXPERIENCE.md — the soul of Dinner League
 
+> **The one sentence:** Fall in love with observed behavior, not imagined features.
+>
+> **The heartbeat:** Think → Build → Discover → Learn → Improve → repeat forever.
+>
+> Borrow *principles*, never imitate *products*. If a better idea exists, invent it. Naming specific apps anchors thinking toward their patterns — reason from first principles instead.
+
 One page on purpose. If this grows past a page, we've lost the plot.
 
 ## What this app is

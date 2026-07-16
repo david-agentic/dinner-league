@@ -18,9 +18,10 @@ Instruction in chat → Claude edits code → push to `main` → Cloudflare Page
 - `functions/api/[[route]].js` — API (Pages Functions), Neon serverless driver
 - Schema auto-creates + seeds on first `/api/state` call. No migrations needed for v1.
 
-## Governance (the discipline, deliberately just 2 files)
+## Governance (deliberately minimal — 3 files, not nine)
 - `EXPERIENCE.md` — the soul + the Golden Rules + the feature scorecard (the gate)
 - `NON_GOALS.md` — what we refuse to be + the KILL LIST
+- `DISCOVERY.md` — observations/hypotheses/experiments/surprises (fills up post-launch)
 Nine foundation files would be process bloat for a solo/5-user app. These two carry it.
 
 ## Business rules (locked)
