@@ -366,7 +366,8 @@ async function tryPin() {
     localStorage.setItem('dl_pin', PIN);
     if (!ME) { showWho(); } else { enter(); }
   } catch (e) {
-    pinErr.textContent = e.message === 'bad_pin' ? 'Wrong PIN — try again' : 'Connection problem — retry';
+    if (e.message === 'bad_pin') pinErr.textContent = 'Wrong PIN — try again';
+    else pinErr.textContent = 'Server: ' + e.message;
   }
   pinInp.disabled = false;
 }

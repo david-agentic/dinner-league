@@ -62,6 +62,13 @@ export async function onRequest(context) {
   const q = neonQ(env.DATABASE_URL);
 
   try {
+    if (route === 'health' && request.method === 'GET') {
+      const out = { has_db_url: !!env.DATABASE_URL, has_pin: !!env.APP_PIN };
+      try { await q(`SELECT 1 AS ok`); out.db = 'connected'; }
+      catch (e) { out.db = 'FAILED: ' + String(e.message || e).slice(0, 200); }
+      return json(out);
+    }
+
     if (route === 'state' && request.method === 'GET') {
       await ensureSchema(q);
       const people = await q(
