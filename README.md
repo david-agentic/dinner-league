@@ -26,6 +26,6 @@ Instruction in chat → Claude edits code → push to `main` → Cloudflare Page
 
 ## Roadmap
 - [x] Phase 1: synced ledger, podium, league, wheel, add-meal, PIN gate, PWA
-- [ ] Phase 2: crown-steal moment, trophy room, smart defaults, roast cards
+- [x] Phase 2: crown-steal moment, trophy room, smart defaults, roast cards
 - [ ] Phase 3: Wrapped, WhatsApp parser, invites/multi-group
 - [ ] Parked: Khata Heist (until daily usage proven)

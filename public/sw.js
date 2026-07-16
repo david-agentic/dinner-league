@@ -1,4 +1,4 @@
-const CACHE = 'dl-v1';
+const CACHE = 'dl-v2';
 const SHELL = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));

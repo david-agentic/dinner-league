@@ -139,6 +139,18 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
 @keyframes sp{to{transform:rotate(360deg)}}
 .who{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 
+
+/* crown steal */
+#steal{position:fixed;inset:0;z-index:90;background:rgba(10,5,20,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px;backdrop-filter:blur(8px)}
+#steal.on{display:flex;animation:fade .5s ease}
+#steal .bigcrown{font-size:76px;animation:crownDrop .9s cubic-bezier(.2,1.6,.4,1)}
+@keyframes crownDrop{0%{transform:translateY(-140px) rotate(-30deg);opacity:0}60%{transform:translateY(10px) rotate(6deg)}100%{transform:translateY(0) rotate(0)}}
+#steal .sname{font-family:var(--disp);font-weight:700;font-size:34px;background:linear-gradient(135deg,var(--gold),var(--chili));-webkit-background-clip:text;background-clip:text;color:transparent}
+#steal .sline{color:var(--ink2);font-size:15px}
+.trorow{background:var(--glass);border:1px solid var(--stroke);border-radius:16px;padding:13px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.trorow .tl{font-weight:600;font-size:14.5px}
+.trorow .tr{font-size:17px;letter-spacing:2px}
+
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -190,6 +202,7 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
   <div class="view" id="v-add">
     <div class="vhead">Add tonight's dinner</div>
     <div class="vsub">Ten seconds. Then watch the table shift.</div>
+    <button class="btn violet" id="sameBtn" style="margin-bottom:20px">⚡ Same as last time</button>
     <div class="field"><div class="flabel">Date</div><input type="date" class="dateinp" id="mDate"></div>
     <div class="field"><div class="flabel">What did we eat?</div><div class="chips" id="mTypes"></div></div>
     <div class="field"><div class="flabel">Total bill</div>
@@ -205,6 +218,9 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
     <div id="board"></div>
     <div class="eyebrow" style="margin-top:24px">Recent dinners</div>
     <div id="history"></div>
+    <div class="eyebrow" style="margin-top:24px">Trophy room · past seasons</div>
+    <div id="trophies"></div>
+    <button class="btn violet" id="roastBtn" style="margin-top:16px">😈 Share this month's roast</button>
   </div>
 </div>
 
@@ -216,6 +232,13 @@ nav{position:absolute;bottom:0;left:0;right:0;max-width:440px;margin:0 auto;disp
 </nav>
 </div>
 
+<div id="steal">
+  <div class="bigcrown">👑</div>
+  <div class="sline">THE CROWN HAS FALLEN</div>
+  <div class="sname" id="stealName"></div>
+  <div class="sline" id="stealLine"></div>
+  <button class="btn gold" style="max-width:240px;margin-top:10px" onclick="document.getElementById('steal').classList.remove('on')">Long live the King</button>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -318,7 +341,7 @@ function groupStreak() {
 const topBy = o => Object.entries(o).sort((a,b) => b[1]-a[1])[0];
 
 /* ---------- render ---------- */
-function renderAll(){ renderHome(); renderBoard(); buildWheel(); buildForm(); }
+function renderAll(){ renderHome(); renderBoard(); renderTrophies(); buildWheel(); buildForm(); }
 function renderHome() {
   document.getElementById('streak').textContent = groupStreak();
   const mn = new Date().toLocaleString('en', {month:'long'});
@@ -456,6 +479,7 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   if (!payers.length) return toast('At least one payer must attend');
   if (!sel.pay || !sel.att.has(sel.pay)) return toast('Pick who actually paid 👛');
   const btn = document.getElementById('saveBtn'); btn.disabled = true;
+  const kingBefore = currentKing();
   try {
     await api('meals', { method:'POST', body: JSON.stringify({
       date: document.getElementById('mDate').value,
@@ -463,6 +487,9 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     const payer = sel.pay;
     await loadState(); renderAll();
     flyCoins(payer); buzz([20,50,20,50]);
+    const kingAfter = currentKing();
+    if (kingBefore && kingAfter && kingBefore !== kingAfter)
+      setTimeout(() => crownSteal(kingAfter, kingBefore), 1400);
     toast('Logged! '+p(payer).name+' covered '+money(bill)+' 🏆');
     sel.types.clear(); sel.att.clear(); sel.pay = null;
     document.getElementById('mBill').value=''; buildForm();
@@ -514,6 +541,92 @@ function go(v){
   document.querySelector('.scroll').scrollTop=0;
 }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{go(t.dataset.v);buzz(8);});
+
+/* ---------- phase 2: crown steal, smart defaults, trophies, roast ---------- */
+function currentKing() {
+  const b = balances(nowMonth);
+  const ranked = PEOPLE.filter(x => x.canPay).map(x => ({id:x.id, bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
+  if (!ranked.length || MEALS.filter(m=>monthKey(m.date)===nowMonth).length === 0) return null;
+  return ranked[0].id;
+}
+function crownSteal(newKing, oldKing) {
+  document.getElementById('stealName').textContent = p(newKing).name + ' takes the throne!';
+  document.getElementById('stealLine').textContent = p(oldKing).name + "'s reign is over.";
+  document.getElementById('steal').classList.add('on');
+  burst(innerWidth/2, innerHeight*0.35); buzz([30,60,30,60,120]);
+}
+document.getElementById('sameBtn').addEventListener('click', () => {
+  const last = MEALS[MEALS.length-1];
+  if (!last) return toast('No previous dinner yet');
+  sel.types = new Set(last.types||[]); sel.att = new Set(last.att); sel.pay = null;
+  document.querySelectorAll('#mTypes .chip').forEach(c=>c.classList.toggle('on', sel.types.has(c.dataset.t)));
+  document.querySelectorAll('#mAtt .chip').forEach(c=>c.classList.toggle('on', sel.att.has(c.dataset.a)));
+  document.querySelectorAll('#mPay .chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('mBill').focus();
+  toast('Prefilled from last dinner — just the bill and payer ⚡');
+});
+function monthsList() {
+  return [...new Set(MEALS.map(m=>monthKey(m.date)))].filter(m=>m<nowMonth).sort();
+}
+function monthTitles(month) {
+  const b = balances(month);
+  const players = PEOPLE.filter(x=>x.canPay).map(x=>({id:x.id,bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
+  const out = [];
+  if (players.length) {
+    out.push([players[0].id,'👑']);
+    const last = players[players.length-1];
+    if (last.bal < 0) out.push([last.id,'👻']);
+  }
+  const bb = topBy(counts('biryani',month)); if (bb && bb[1]>0) out.push([bb[0],'🍛']);
+  const dm = topBy(counts('drinks',month)); if (dm && dm[1]>0) out.push([dm[0],'🥤']);
+  return out;
+}
+function renderTrophies() {
+  const cab = {}; PEOPLE.forEach(x=>cab[x.id]=[]);
+  monthsList().forEach(m => monthTitles(m).forEach(([id,t]) => cab[id].push(t)));
+  const rows = PEOPLE.filter(x=>cab[x.id].length);
+  document.getElementById('trophies').innerHTML = rows.length ? rows.map(x =>
+    `<div class="trorow"><div class="tl">${x.name}</div><div class="tr">${cab[x.id].join('')}</div></div>`
+  ).join('') : '<div class="vsub">First season in progress — trophies land when the month ends.</div>';
+}
+document.getElementById('roastBtn').addEventListener('click', async () => {
+  const b = balances(nowMonth);
+  const att = {}; PEOPLE.forEach(x=>att[x.id]=0);
+  const paid = {}; PEOPLE.forEach(x=>paid[x.id]=0);
+  MEALS.forEach(m => { if (monthKey(m.date)!==nowMonth) return;
+    m.att.forEach(id=>{ if(att[id]!==undefined) att[id]++; }); paid[m.payer] = (paid[m.payer]||0)+1; });
+  const players = PEOPLE.filter(x=>x.canPay).map(x=>({...x,bal:b[x.id]||0})).sort((a,z)=>z.bal-a.bal);
+  const ghost = players[players.length-1];
+  if (!ghost || ghost.bal >= 0) return toast('Nobody to roast — everyone is square 😇');
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1080;
+  const g = c.getContext('2d');
+  g.fillStyle = '#120B1E'; g.fillRect(0,0,1080,1080);
+  const grad = g.createLinearGradient(0,0,1080,1080);
+  grad.addColorStop(0,'rgba(139,92,246,.25)'); grad.addColorStop(1,'rgba(255,92,57,.25)');
+  g.fillStyle = grad; g.fillRect(0,0,1080,1080);
+  g.textAlign = 'center';
+  g.font = '200px sans-serif'; g.fillText('👻', 540, 320);
+  g.fillStyle = '#F4EEFF'; g.font = 'bold 88px sans-serif';
+  g.fillText('THE GHOST', 540, 470);
+  g.fillStyle = '#FFB627'; g.font = 'bold 72px sans-serif';
+  g.fillText(ghost.name, 540, 580);
+  g.fillStyle = '#B9AED1'; g.font = '46px sans-serif';
+  g.fillText('ate ' + att[ghost.id] + ' dinners this month', 540, 700);
+  g.fillText('paid for ' + (paid[ghost.id]||0), 540, 770);
+  g.fillStyle = '#FF5C39'; g.font = 'bold 50px sans-serif';
+  g.fillText('owes ' + money(ghost.bal), 540, 880);
+  g.fillStyle = '#7C7195'; g.font = '36px sans-serif';
+  g.fillText('🍛 Dinner League', 540, 1000);
+  c.toBlob(async blob => {
+    const file = new File([blob], 'roast.png', {type:'image/png'});
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      try { await navigator.share({files:[file], title:'Dinner League roast'}); return; } catch(e){}
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'roast.png'; a.click();
+    toast('Roast card downloaded — forward it 😈');
+  });
+});
 
 /* ---------- boot ---------- */
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
