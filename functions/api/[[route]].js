@@ -56,12 +56,27 @@ export async function onRequest(context) {
   const route = url.pathname.replace(/^\/api\//, '');
 
   const pin = request.headers.get('x-pin') || '';
-  if (!env.APP_PIN || pin !== env.APP_PIN) return json({ error: 'bad_pin' }, 401);
+  const isPincheck = route === 'pincheck';
+  if (!isPincheck && (!env.APP_PIN || pin !== env.APP_PIN)) return json({ error: 'bad_pin' }, 401);
   if (!env.DATABASE_URL) return json({ error: 'no_database_url' }, 500);
 
   const q = neonQ(env.DATABASE_URL);
 
   try {
+    if (route === 'pincheck' && request.method === 'GET') {
+      const given = url.searchParams.get('pin') || '';
+      const real = env.APP_PIN || '';
+      return json({
+        you_sent_length: given.length,
+        stored_length: real.length,
+        exact_match: given === real,
+        trimmed_match: given.trim() === real.trim(),
+        stored_has_spaces: real !== real.trim(),
+        stored_first_char_code: real.charCodeAt(0) || null,
+        stored_last_char_code: real.charCodeAt(real.length-1) || null
+      });
+    }
+
     if (route === 'health' && request.method === 'GET') {
       const out = { has_db_url: !!env.DATABASE_URL, has_pin: !!env.APP_PIN };
       try { await q(`SELECT 1 AS ok`); out.db = 'connected'; }
